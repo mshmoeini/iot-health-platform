@@ -1,0 +1,19 @@
+{
+  "patients": [
+    {
+      "patientId": 1,
+      "name": "Patient One",
+      "wristbandId": "WB-001"
+    },
+    {
+      "patientId": 2,
+      "name": "Patient Two",
+      "wristbandId": "WB-002"
+    },
+    {
+      "patientId": 3,
+      "name": "Patient Three",
+      "wristbandId": "WB-003"
+    }
+  ]
+}
