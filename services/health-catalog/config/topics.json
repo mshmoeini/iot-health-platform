@@ -1,0 +1,20 @@
+{
+  "mqtt": {
+    "base": {
+      "vitals": "wristbands/{wristbandId}/vitals",
+      "alerts": "alerts/{patientId}",
+      "system": "system/#"
+    },
+    "subscriptions": {
+      "risk_analysis": [
+        "wristbands/+/vitals"
+      ],
+      "dashboard_backend": [
+        "alerts/+"
+      ],
+      "alert_notification": [
+        "alerts/+"
+      ]
+    }
+  }
+}
