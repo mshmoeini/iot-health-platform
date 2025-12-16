@@ -1,0 +1,19 @@
+{
+  "services": {
+    "health_catalog": {
+      "base_url": "http://localhost:8000"
+    },
+    "risk_analysis": {
+      "base_url": "http://localhost:8001"
+    },
+    "alert_notification": {
+      "base_url": "http://localhost:8002"
+    },
+    "data_storage": {
+      "base_url": "http://localhost:8003"
+    },
+    "dashboard_backend": {
+      "base_url": "http://localhost:8004"
+    }
+  }
+}
