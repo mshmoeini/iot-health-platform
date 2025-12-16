@@ -1,0 +1,19 @@
+{
+  "global": {
+    "hr": {
+      "normal": [60, 100],
+      "warning": [100, 120],
+      "critical": [120, null]
+    },
+    "spo2": {
+      "normal": [95, 100],
+      "warning": [90, 95],
+      "critical": [null, 90]
+    },
+    "temperature": {
+      "normal": [36.0, 37.5],
+      "warning": [37.5, 38.5],
+      "critical": [38.5, null]
+    }
+  }
+}
