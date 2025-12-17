@@ -4,7 +4,7 @@ import random
 from datetime import datetime
 import paho.mqtt.client as mqtt
 
-BROKER_HOST = "127.0.0.1"
+BROKER_HOST = "localhost"
 BROKER_PORT = 1883
 TOPIC = "health/vitals"
 
