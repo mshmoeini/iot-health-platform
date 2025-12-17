@@ -1,11 +1,14 @@
-/* Tables */
-
+/* ===============================
+   WRISTBAND
+================================ */
 CREATE TABLE WRISTBAND (
     wristband_id INTEGER PRIMARY KEY,
     production_date DATE NOT NULL
 );
 
-/* ----------------------------------------------- */
+/* ===============================
+   PATIENT
+================================ */
 CREATE TABLE PATIENT (
     patient_id INTEGER PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -19,10 +22,11 @@ CREATE TABLE PATIENT (
         ))
 );
 
-
-/* ----------------------------------------------- */
+/* ===============================
+   WRISTBAND_ASSIGNMENT
+================================ */
 CREATE TABLE WRISTBAND_ASSIGNMENT (
-    assignment_id INTEGER PRIMARY KEY,
+    assignment_id INTEGER PRIMARY KEY AUTOINCREMENT,
     wristband_id INTEGER NOT NULL,
     patient_id INTEGER NOT NULL,
     start_date TIMESTAMP NOT NULL,
@@ -35,14 +39,39 @@ CREATE TABLE WRISTBAND_ASSIGNMENT (
         REFERENCES PATIENT(patient_id)
 );
 
+/* فقط یک تخصیص فعال برای هر wristband */
 CREATE UNIQUE INDEX one_active_assignment
 ON WRISTBAND_ASSIGNMENT (wristband_id)
 WHERE end_date IS NULL;
 
+/* ===============================
+   VITAL_MEASUREMENT  (🔥 اصلاح‌شده)
+================================ */
+CREATE TABLE VITAL_MEASUREMENT (
+    measurement_id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-/* ----------------------------------------------- */
+    assignment_id INTEGER NOT NULL,
+    measured_at TIMESTAMP NOT NULL,
+
+    heart_rate INTEGER,
+    spo2 INTEGER,
+    temperature REAL,
+    motion REAL,
+    battery_level INTEGER CHECK (battery_level BETWEEN 0 AND 100),
+
+    FOREIGN KEY (assignment_id)
+        REFERENCES WRISTBAND_ASSIGNMENT(assignment_id)
+);
+
+/* ایندکس مهم برای history */
+CREATE INDEX idx_vital_assignment_time
+ON VITAL_MEASUREMENT(assignment_id, measured_at);
+
+/* ===============================
+   ALERT
+================================ */
 CREATE TABLE ALERT (
-    alert_id INTEGER PRIMARY KEY,
+    alert_id INTEGER PRIMARY KEY AUTOINCREMENT,
 
     assignment_id INTEGER NOT NULL,
 
@@ -68,26 +97,4 @@ CREATE TABLE ALERT (
 
     FOREIGN KEY (assignment_id)
         REFERENCES WRISTBAND_ASSIGNMENT(assignment_id)
-);
-
-/* ----------------------------------------------- */
-CREATE TABLE VITAL_MEASUREMENT (
-    measurement_id INTEGER PRIMARY KEY,
-
-    wristband_id INTEGER NOT NULL,
-    patient_id INTEGER NOT NULL,
-
-    measured_at TIMESTAMP NOT NULL,
-
-    heart_rate INTEGER,
-    spo2 INTEGER,
-    temperature DECIMAL(4,1),
-    motion DECIMAL(6,3),
-    battery_level INTEGER CHECK (battery_level BETWEEN 0 AND 100),
-
-    FOREIGN KEY (wristband_id)
-        REFERENCES WRISTBAND(wristband_id),
-
-    FOREIGN KEY (patient_id)
-        REFERENCES PATIENT(patient_id)
 );

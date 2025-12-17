@@ -1,7 +1,12 @@
 from sqlalchemy import create_engine, Table, Column, Integer, Float, MetaData, DateTime
 from datetime import datetime
+import os
 
-engine = create_engine("sqlite:///data/health.db")
+DB_PATH = os.getenv("DB_PATH", "/app/data/health.db")
+engine = create_engine(
+    f"sqlite:///{DB_PATH}",
+    connect_args={"check_same_thread": False}
+)
 metadata = MetaData()
 
 vitals = Table(
