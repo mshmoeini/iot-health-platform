@@ -44,7 +44,8 @@ import paho.mqtt.client as mqtt
 
 BROKER_HOST = "localhost"
 BROKER_PORT = 1883
-TOPIC = "health/vitals"
+TOPIC = "patients/1/vitals"
+
 
 def on_message(client, userdata, msg):
     payload = json.loads(msg.payload.decode())

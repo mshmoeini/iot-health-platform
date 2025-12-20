@@ -4,7 +4,8 @@ from services.risk_analysis.Threshold_check import process_hr_value
 
 BROKER_HOST = "localhost"
 BROKER_PORT = 1883
-TOPIC = "health/vitals"
+TOPIC = "patients/1/vitals"
+
 
 def on_message(client, userdata, msg):
     data = json.loads(msg.payload.decode())

@@ -1,6 +1,7 @@
 import json
 import time
 import paho.mqtt.publish as publish
+import random
 
 BROKER = "localhost"
 PORT = 1883
@@ -10,7 +11,7 @@ while True:
     payload = {
         "wristband_id": 1,
         "measured_at": "2025-01-01T12:00:00",
-        "heart_rate": 90,
+        "heart_rate": 1500,
         "spo2": 97,
         "temperature": 36.6,
         "motion": 0.2,
