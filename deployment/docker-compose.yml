@@ -17,3 +17,13 @@ services:
       - MQTT_PORT=1883
     depends_on:
       - mqtt-broker
+
+  dashboard-backend:
+    build:
+      context: ../services/dashboard-backend
+    container_name: dashboard-backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - data-storage
+      - mqtt-broker
