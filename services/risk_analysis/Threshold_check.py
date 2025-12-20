@@ -37,3 +37,25 @@ def process_hr_value(hr_value):
 if __name__ == "__main__":
     process_hr_value(105)
     process_hr_value(130)
+
+
+import json
+import paho.mqtt.client as mqtt
+
+BROKER_HOST = "localhost"
+BROKER_PORT = 1883
+TOPIC = "health/vitals"
+
+def on_message(client, userdata, msg):
+    payload = json.loads(msg.payload.decode())
+    hr = payload["heart_rate"]
+    print("Received HR:", hr)
+    process_hr_value(hr)
+
+client = mqtt.Client()
+client.connect(BROKER_HOST, BROKER_PORT, 60)
+client.subscribe(TOPIC)
+client.on_message = on_message
+
+print("Listening to real vitals...")
+client.loop_forever()
