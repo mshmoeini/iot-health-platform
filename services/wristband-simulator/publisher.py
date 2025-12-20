@@ -5,7 +5,7 @@ import random
 
 BROKER = "localhost"
 PORT = 1883
-TOPIC = "patients/1/vitals"
+TOPIC = "health/alerts"
 
 while True:
     payload = {
