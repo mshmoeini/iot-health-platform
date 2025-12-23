@@ -2,7 +2,10 @@ import json
 import os
 import paho.mqtt.client as mqtt
 from sqlalchemy import text
-from storage.local import engine
+
+from storage.local import engine, LocalStorage
+
+storage = LocalStorage()
 
 
 def on_message(client, userdata, msg):
@@ -19,7 +22,8 @@ def on_message(client, userdata, msg):
         print("[MQTT] wristband_id missing, drop message")
         return
 
-    with engine.begin() as conn:  # 🔥 IMPORTANT: transaction + commit
+    # --- resolve active assignment ---
+    with engine.begin() as conn:
         result = conn.execute(
             text(
                 """
@@ -32,41 +36,19 @@ def on_message(client, userdata, msg):
             {"wid": wristband_id},
         ).fetchone()
 
-        if result is None:
-            print(f"[MQTT] No active assignment for wristband {wristband_id}")
-            return
+    if result is None:
+        print(f"[MQTT] No active assignment for wristband {wristband_id}")
+        return
 
-        assignment_id = result[0]
+    assignment_id = result[0]
 
-        conn.execute(
-            text(
-                """
-                INSERT INTO VITAL_MEASUREMENT (
-                    assignment_id,
-                    measured_at,
-                    heart_rate,
-                    spo2,
-                    temperature,
-                    motion,
-                    battery_level
-                )
-                VALUES (
-                    :aid, :ts, :hr, :spo2, :temp, :motion, :bat
-                )
-                """
-            ),
-            {
-                "aid": assignment_id,
-                "ts": payload["measured_at"],
-                "hr": payload.get("heart_rate"),
-                "spo2": payload.get("spo2"),
-                "temp": payload.get("temperature"),
-                "motion": payload.get("motion"),
-                "bat": payload.get("battery_level"),
-            },
-        )
+    # --- save via ORM storage ---
+    storage.save_vital(
+        assignment_id=assignment_id,
+        data=payload,
+    )
 
-    print(f"[VITAL] stored for assignment {assignment_id}")
+    print(f"[VITAL] stored via ORM for assignment {assignment_id}")
 
 
 def start_mqtt():
@@ -81,8 +63,10 @@ def start_mqtt():
     print(f"[MQTT] connecting to {broker}:{port}")
     client.connect(broker, port)
 
-    topic = "patients/+/vitals"
+    topic = "wristbands/+/vitals"
     client.subscribe(topic)
+    client.subscribe("alerts/#")
+    print("[MQTT] subscribed to alerts/#")
     print(f"[MQTT] subscribed to {topic}")
 
     client.loop_forever()

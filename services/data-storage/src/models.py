@@ -62,3 +62,40 @@ class VitalMeasurement(Base):
         Integer,
         CheckConstraint("battery_level BETWEEN 0 AND 100"),
     )
+
+class Alert(Base):
+    __tablename__ = "ALERT"
+
+    alert_id = Column(Integer, primary_key=True, autoincrement=True)
+
+    assignment_id = Column(
+        Integer,
+        ForeignKey("WRISTBAND_ASSIGNMENT.assignment_id"),
+        nullable=False,
+    )
+
+    generated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    acknowledged_at = Column(DateTime)
+    reviewed_at = Column(DateTime)
+    reviewed_by = Column(String(50))
+    clinical_note = Column(String)
+
+    message = Column(String, nullable=False)
+    alert_type = Column(String(30), nullable=False)
+    severity = Column(String(20), nullable=False)
+
+    status = Column(
+        String(30),
+        CheckConstraint(
+            "status IN ("
+            "'JUST_GENERATED',"
+            "'ACKNOWLEDGED',"
+            "'CLINICALLY_ASSESSED',"
+            "'CLOSED'"
+            ")"
+        ),
+        nullable=False,
+        default="JUST_GENERATED",
+    )
+
+    threshold_profile = Column(String(30), nullable=False)
