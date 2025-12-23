@@ -39,11 +39,15 @@ services:
     depends_on:
       - mqtt-broker
 
-  # alert-notification:
-  #   build: ../services/alert_notification
-  #   environment:
-  #     - MQTT_HOST=mqtt-broker
-  #     - MQTT_PORT=1883
+  alert_notification:
+    build: ../services/alert_notification
+    container_name: alert_notification
+    environment:
+      - MQTT_HOST=mqtt-broker
+      - MQTT_PORT=1883
+    depends_on:
+      - mqtt-broker
+
 
 volumes:
   data-storage-db:
