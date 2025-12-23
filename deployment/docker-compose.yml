@@ -29,12 +29,15 @@ services:
       - data-storage
       - mqtt-broker
 
-  # ⛔ فعلاً خاموش (بعداً فعال می‌کنیم)
-  # risk-analysis:
-  #   build: ../services/risk_analysis
-  #   environment:
-  #     - MQTT_HOST=mqtt-broker
-  #     - MQTT_PORT=1883
+ 
+  risk_analysis:
+    build: ../services/risk_analysis
+    container_name: risk-analysis
+    environment:
+      - MQTT_HOST=mqtt-broker
+      - MQTT_PORT=1883
+    depends_on:
+      - mqtt-broker
 
   # alert-notification:
   #   build: ../services/alert_notification
