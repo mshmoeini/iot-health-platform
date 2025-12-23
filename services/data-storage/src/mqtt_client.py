@@ -11,15 +11,21 @@ storage = LocalStorage()
 def on_message(client, userdata, msg):
     print(f"[MQTT] message received on {msg.topic}")
 
+    # -------------------------
+    # Decode JSON (once)
+    # -------------------------
     try:
         payload = json.loads(msg.payload.decode())
     except json.JSONDecodeError:
         print(f"[MQTT] Invalid JSON payload: {msg.payload}")
         return
 
-    wristband_id = payload.get("wristband_id")
-    if wristband_id is None:
-        print("[MQTT] wristband_id missing, drop message")
+    # -------------------------
+    # ALERTS
+    # -------------------------
+    if msg.topic == "health/alerts":
+        print("[ALERT] received:", payload)
+        # TODO: insert into ALERT table
         return
 
     # --- resolve active assignment ---
@@ -68,5 +74,7 @@ def start_mqtt():
     client.subscribe("alerts/#")
     print("[MQTT] subscribed to alerts/#")
     print(f"[MQTT] subscribed to {topic}")
+
+    print("[MQTT] subscribed to vitals + alerts")
 
     client.loop_forever()

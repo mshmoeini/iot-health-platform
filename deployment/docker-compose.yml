@@ -10,20 +10,44 @@ services:
   data-storage:
     build: ../services/data-storage
     container_name: data-storage
-    volumes:
-      - ../data:/app/data
     environment:
       - MQTT_HOST=mqtt-broker
       - MQTT_PORT=1883
+      - DB_PATH=/app/data/health.db
+    volumes:
+      - data-storage-db:/app/data
     depends_on:
       - mqtt-broker
+    command: python src/mqtt_client.py
 
   dashboard-backend:
-    build:
-      context: ../services/dashboard-backend
+    build: ../services/dashboard-backend
     container_name: dashboard-backend
     ports:
       - "8000:8000"
     depends_on:
       - data-storage
       - mqtt-broker
+
+ 
+  risk_analysis:
+    build: ../services/risk_analysis
+    container_name: risk-analysis
+    environment:
+      - MQTT_HOST=mqtt-broker
+      - MQTT_PORT=1883
+    depends_on:
+      - mqtt-broker
+
+  alert_notification:
+    build: ../services/alert_notification
+    container_name: alert_notification
+    environment:
+      - MQTT_HOST=mqtt-broker
+      - MQTT_PORT=1883
+    depends_on:
+      - mqtt-broker
+
+
+volumes:
+  data-storage-db:
