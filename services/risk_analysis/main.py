@@ -5,7 +5,7 @@ import paho.mqtt.client as mqtt
 MQTT_HOST = os.getenv("MQTT_HOST", "mqtt-broker")
 MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
 
-VITALS_TOPIC = "patients/+/vitals"
+VITALS_TOPIC = "wristbands/+/vitals"
 ALERT_TOPIC = "health/alerts"
 
 HR_WARNING = 100
