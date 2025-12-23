@@ -2,8 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY . /app
+# برای اینکه print ها فوری دیده بشن
+ENV PYTHONUNBUFFERED=1
 
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["python","-u", "src/main.py"]
+# کل src رو بیار داخل کانتینر
+COPY src ./src
+
+CMD ["python", "-u", "src/main.py"]
