@@ -6,7 +6,7 @@ MQTT_HOST = os.getenv("MQTT_HOST", "mqtt-broker")
 MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
 
 VITALS_TOPIC = "wristbands/+/vitals"
-ALERT_TOPIC = "health/alerts"
+RISK_TOPIC = "health/risk/{wristband_id}"
 
 HR_WARNING = 100
 HR_CRITICAL = 120
@@ -36,6 +36,7 @@ def on_message(client, userdata, msg):
         return
 
     hr = payload.get("heart_rate")
+    wristband_id = payload.get("wristband_id")
     if hr is None:
         print("[RISK] heart_rate missing")
         return
@@ -46,12 +47,13 @@ def on_message(client, userdata, msg):
         return
 
     alert = {
+        "wristband_id": wristband_id,
         "metric": "HR",
         "value": hr,
         "status": status
     }
 
-    client.publish(ALERT_TOPIC, json.dumps(alert))
+    client.publish(RISK_TOPIC, json.dumps(alert))
     print(f"[RISK] alert published: {alert}")
 
 
@@ -70,3 +72,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
