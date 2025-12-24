@@ -147,24 +147,24 @@ def handle_alert(payload: dict):
 # MQTT STARTUP
 # =========================================================
 def start_mqtt():
-    print("[MQTT] start_mqtt called - STEP 1")
+    print("[MQTT] start_mqtt called ")
 
     broker = os.getenv("MQTT_HOST", "mqtt-broker")
     port = int(os.getenv("MQTT_PORT", 1883))
 
-    print("[MQTT] creating client - STEP 2")
+    #print("[MQTT] creating client - STEP 2")
     client = mqtt.Client()
 
-    print("[MQTT] assigning callback - STEP 3")
+    #print("[MQTT] assigning callback - STEP 3")
     client.on_message = on_message
 
-    print("[MQTT] connecting - STEP 4")
+    #print("[MQTT] connecting - STEP 4")
     client.connect(broker, port)
 
-    print("[MQTT] subscribing - STEP 5")
+    #print("[MQTT] subscribing - STEP 5")
     client.subscribe("wristbands/+/vitals")
     client.subscribe("health/alerts")
 
-    print("[MQTT] entering loop_forever - STEP 6")
+    print("[MQTT] entering loop_forever")
     client.loop_forever()
 
