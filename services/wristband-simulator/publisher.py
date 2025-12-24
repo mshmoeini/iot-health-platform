@@ -13,8 +13,8 @@ PATIENT_ID = 1  # برای تست فعلاً همین
 VITALS_TOPIC = f"wristbands/{WRISTBAND_ID}/vitals"
 ALERTS_TOPIC = f"health/alerts"
 
-VITALS_INTERVAL_SEC = 5
-ALERT_INTERVAL_SEC = 10
+VITALS_INTERVAL_SEC = 20
+ALERT_INTERVAL_SEC = 20
 
 last_alert_ts = 0
 

@@ -28,7 +28,7 @@ def on_message(client, userdata, msg):
     # =====================================================
     # ALERTS  → topic: health/alerts
     # =====================================================
-    if msg.topic == "health/alerts":
+    if msg.topic == "health/alerts/#":
         handle_alert(payload)
         return
 
