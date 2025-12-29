@@ -1,0 +1,41 @@
+{
+  "active_environment": "local",
+
+  "environments": {
+    "local": {
+      "description": "Local development environment",
+      "mqtt": {
+        "host": "localhost",
+        "port": 1883
+      },
+      "services_base": {
+        "protocol": "http",
+        "host": "localhost"
+      }
+    },
+
+    "docker": {
+      "description": "Docker Compose environment",
+      "mqtt": {
+        "host": "mqtt-broker",
+        "port": 1883
+      },
+      "services_base": {
+        "protocol": "http",
+        "host": "service"
+      }
+    },
+
+    "cloud": {
+      "description": "Cloud deployment environment",
+      "mqtt": {
+        "host": "mqtt.my-cloud-provider.com",
+        "port": 1883
+      },
+      "services_base": {
+        "protocol": "https",
+        "host": "api.my-domain.com"
+      }
+    }
+  }
+}

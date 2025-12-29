@@ -1,19 +1,46 @@
 {
-  "global": {
-    "hr": {
-      "normal": [60, 100],
-      "warning": [100, 120],
-      "critical": [120, null]
+  "profiles": {
+    "STANDARD": {
+      "hr": {
+        "normal": [60, 100],
+        "warning": [100, 120],
+        "critical": [120, null]
+      },
+      "spo2": {
+        "normal": [95, 100],
+        "warning": [90, 95],
+        "critical": [null, 90]
+      },
+      "temperature": {
+        "normal": [36.0, 37.5],
+        "warning": [37.5, 38.5],
+        "critical": [38.5, null]
+      }
     },
-    "spo2": {
-      "normal": [95, 100],
-      "warning": [90, 95],
-      "critical": [null, 90]
-    },
-    "temperature": {
-      "normal": [36.0, 37.5],
-      "warning": [37.5, 38.5],
-      "critical": [38.5, null]
+
+    "HIGH_RISK": {
+      "hr": {
+        "normal": [60, 90],
+        "warning": [90, 110],
+        "critical": [110, null]
+      },
+      "spo2": {
+        "normal": [94, 100],
+        "warning": [90, 94],
+        "critical": [null, 90]
+      },
+      "temperature": {
+        "normal": [36.0, 37.3],
+        "warning": [37.3, 38.0],
+        "critical": [38.0, null]
+      }
     }
-  }
+  },
+
+  "defaults": {
+    "profile": "STANDARD"
+  },
+
+  "supported_vitals": ["hr", "spo2", "temperature"],
+  "levels": ["normal", "warning", "critical"]
 }

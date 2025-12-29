@@ -1,0 +1,18 @@
+{
+  "mqtt_topics": {
+    "vitals": {
+      "template": "wristbands/{wristbandId}/vitals",
+      "subscribe_pattern": "wristbands/+/vitals",
+      "example": "wristbands/WB-001/vitals"
+    },
+    "alerts": {
+      "publish_pattern": "health/alerts",
+      "subscribe_pattern": "health/alerts",
+      "subscribe_pattern_wildcard": "health/alerts/#"
+    },
+    "wildcards": {
+      "single_level": "+",
+      "multi_level": "#"
+    }
+  }
+}
