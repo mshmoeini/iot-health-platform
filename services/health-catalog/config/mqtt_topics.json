@@ -1,7 +1,7 @@
 {
   "mqtt_topics": {
     "vitals": {
-      "template": "wristbands/{wristbandId}/vitals",
+      "template": "wristbands/{wristband_id}/vitals",
       "subscribe_pattern": "wristbands/+/vitals",
       "example": "wristbands/WB-001/vitals"
     },
@@ -9,6 +9,12 @@
       "publish_pattern": "health/alerts",
       "subscribe_pattern": "health/alerts",
       "subscribe_pattern_wildcard": "health/alerts/#"
+    },
+    "risk": {
+      "template": "health/risk/{wristband_id}",
+      "subscribe_pattern": "health/risk/+",
+      "subscribe_pattern_wildcard": "health/risk/#",
+      "example": "health/risk/WB-001"
     },
     "wildcards": {
       "single_level": "+",
