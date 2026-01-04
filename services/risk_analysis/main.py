@@ -2,6 +2,7 @@ import json
 import os
 import paho.mqtt.client as mqtt
 
+
 MQTT_HOST = os.getenv("MQTT_HOST", "mqtt-broker")
 MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
 
@@ -41,16 +42,17 @@ def on_message(client, userdata, msg):
         print("[RISK] heart_rate missing")
         return
 
-    status = evaluate_hr(hr)
-    if status == "NORMAL":
+    severity = evaluate_hr(hr)
+    if severity == "NORMAL":
         print(f"[RISK] HR={hr} NORMAL")
         return
 
     alert = {
         "wristband_id": wristband_id,
-        "metric": "HR",
+        "alert_type": "HR",
         "value": hr,
-        "status": status
+        "severity": severity
+        
     }
 
     client.publish(RISK_TOPIC, json.dumps(alert))
