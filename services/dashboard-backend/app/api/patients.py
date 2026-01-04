@@ -1,9 +1,8 @@
 from fastapi import APIRouter
-from app.services.fake_storage import PATIENTS
-
+from app.services.container import storage
 
 router = APIRouter()
 
 @router.get("/")
 def get_patients():
-    return PATIENTS
+    return storage.get_patients()

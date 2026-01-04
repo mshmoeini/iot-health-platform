@@ -1,9 +1,8 @@
 from fastapi import APIRouter
-from app.services.fake_storage import VITALS
-
+from app.services.container import storage
 
 router = APIRouter()
 
 @router.get("/{patient_id}")
 def get_latest_vitals(patient_id: int):
-    return VITALS.get(patient_id, {})
+    return storage.get_latest_vitals(patient_id)
