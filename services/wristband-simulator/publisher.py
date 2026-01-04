@@ -17,6 +17,11 @@ VITALS_INTERVAL_SEC = 20
 ALERT_INTERVAL_SEC = 20
 
 last_alert_ts = 0
+profile = ["STANDARD",
+    "CARDIAC",
+    "ELDERLY",
+    "RESPIRATORY_RISK",
+    "HIGH_RISK"]
 
 while True:
     now_iso = datetime.now(timezone.utc).isoformat()
@@ -29,7 +34,8 @@ while True:
         "spo2": random.randint(92, 100),
         "temperature": round(random.uniform(35.8, 38.8), 1),
         "motion": round(random.uniform(0.0, 1.5), 2),
-        "battery_level": random.randint(20, 100)
+        "battery_level": random.randint(20, 100),
+        "profile": random.choice(profile)
     }
 
     publish.single(
