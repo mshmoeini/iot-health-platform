@@ -5,17 +5,13 @@ from datetime import datetime
 
 router = APIRouter()
 
-# مسیر فایل topics.json
-CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "topics.json"
+CONFIG_PATH = Path("/app/config/mqtt_topics.json")
 
 
 @router.get("/topics")
 def get_topics():
-    """
-    Returns MQTT topic definitions used across the system.
-    """
     try:
-        with open(CONFIG_PATH, "r") as file:
+        with open(CONFIG_PATH, "r", encoding="utf-8") as file:
             topics = json.load(file)
 
         return {
@@ -27,5 +23,17 @@ def get_topics():
     except FileNotFoundError:
         raise HTTPException(
             status_code=500,
-            detail="topics.json file not found"
+            detail=f"Config file not found: {CONFIG_PATH}"
+        )
+
+    except json.JSONDecodeError:
+        raise HTTPException(
+            status_code=500,
+            detail="Invalid JSON format in mqtt_topics.json"
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
         )
