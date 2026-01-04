@@ -15,6 +15,80 @@
         "normal": [36.0, 37.5],
         "warning": [37.5, 38.5],
         "critical": [38.5, null]
+      },
+      "battery": {
+        "normal": [50, 100],
+        "warning": [20, 50],
+        "critical": [0, 20]
+      }
+    },
+
+    "CARDIAC": {
+      "hr": {
+        "normal": [60, 90],
+        "warning": [90, 110],
+        "critical": [110, null]
+      },
+      "spo2": {
+        "normal": [95, 100],
+        "warning": [90, 95],
+        "critical": [null, 90]
+      },
+      "temperature": {
+        "normal": [36.0, 37.4],
+        "warning": [37.4, 38.2],
+        "critical": [38.2, null]
+      },
+      "battery": {
+        "normal": [50, 100],
+        "warning": [20, 50],
+        "critical": [0, 20]
+      }
+    },
+
+    "ELDERLY": {
+      "hr": {
+        "normal": [55, 95],
+        "warning": [95, 115],
+        "critical": [115, null]
+      },
+      "spo2": {
+        "normal": [94, 100],
+        "warning": [90, 94],
+        "critical": [null, 90]
+      },
+      "temperature": {
+        "normal": [35.8, 37.3],
+        "warning": [37.3, 38.0],
+        "critical": [38.0, null]
+      },
+      "battery": {
+        "normal": [50, 100],
+        "warning": [20, 50],
+        "critical": [0, 20]
+      }
+    },
+
+    "RESPIRATORY_RISK": {
+      "hr": {
+        "normal": [60, 100],
+        "warning": [100, 120],
+        "critical": [120, null]
+      },
+      "spo2": {
+        "normal": [94, 100],
+        "warning": [90, 94],
+        "critical": [null, 90]
+      },
+      "temperature": {
+        "normal": [36.0, 37.5],
+        "warning": [37.5, 38.3],
+        "critical": [38.3, null]
+      },
+      "battery": {
+        "normal": [50, 100],
+        "warning": [20, 50],
+        "critical": [0, 20]
       }
     },
 
@@ -33,6 +107,11 @@
         "normal": [36.0, 37.3],
         "warning": [37.3, 38.0],
         "critical": [38.0, null]
+      },
+      "battery": {
+        "normal": [50, 100],
+        "warning": [20, 50],
+        "critical": [0, 20]
       }
     }
   },
@@ -41,6 +120,6 @@
     "profile": "STANDARD"
   },
 
-  "supported_vitals": ["hr", "spo2", "temperature"],
+  "supported_vitals": ["hr", "spo2", "temperature", "battery"],
   "levels": ["normal", "warning", "critical"]
 }

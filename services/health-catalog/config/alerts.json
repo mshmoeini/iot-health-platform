@@ -13,7 +13,7 @@
     "LOW_BATTERY"
   ],
 
-  "severities": ["LOW", "MEDIUM", "HIGH"],
+  "severities": ["normal", "warning", "critical"],
 
   "statuses": [
     "JUST_GENERATED",
