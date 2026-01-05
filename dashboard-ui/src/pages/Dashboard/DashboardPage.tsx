@@ -5,7 +5,6 @@ import { AggregatedMetrics } from './components/AggregatedMetrics/AggregatedMetr
 import { SystemAlertsPanel } from './components/SystemAlertsPanel';
 
 export default function DashboardPage() {
-  // ✅ Hook اینجا، داخل کامپوننت
   const navigate = useNavigate();
 
   const {
@@ -13,8 +12,21 @@ export default function DashboardPage() {
     metrics,
     alerts,
     acknowledgeAlert,
+    loading,
+    error,
   } = useDashboardData();
 
+  // ⏳ Loading state
+  if (loading) {
+    return <div className="text-sm text-gray-500">Loading dashboard…</div>;
+  }
+
+  // ❌ Error state
+  if (error) {
+    return <div className="text-sm text-red-500">{error}</div>;
+  }
+
+  // 🛡 Safety (should rarely happen now)
   if (!systemOverview) return null;
 
   return (
@@ -31,6 +43,7 @@ export default function DashboardPage() {
       <SystemAlertsPanel
         alerts={alerts}
         onViewDetails={(id) => navigate(`/alerts?id=${id}`)}
+        onAcknowledge={acknowledgeAlert}   
       />
     </div>
   );

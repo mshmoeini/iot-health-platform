@@ -1,24 +1,17 @@
 import { AlertTriangle, Clock, CheckCircle } from 'lucide-react';
 import { Button } from '../../../app/components/ui/button';
-
-interface SystemAlert {
-  id: string;
-  severity: 'critical' | 'warning';
-  alertType: string;
-  description: string;
-  deviceId: string;
-  timestamp: string;
-  acknowledged: boolean;
-}
+import type { UIAlert } from '../../Alert/types/alerts.types';
 
 interface SystemAlertsPanelProps {
-  alerts: SystemAlert[];
+  alerts: UIAlert[];
   onViewDetails: (id: string) => void;
+  onAcknowledge: (id: string) => void;
 }
 
 export function SystemAlertsPanel({
   alerts,
   onViewDetails,
+  onAcknowledge,
 }: SystemAlertsPanelProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
@@ -49,69 +42,90 @@ export function SystemAlertsPanel({
             </p>
           </div>
         ) : (
-          alerts.map((alert) => (
-            <div
-              key={alert.id}
-              className={`p-4 rounded-lg border-l-4 transition-all ${
-                alert.severity === 'critical'
-                  ? 'bg-red-50 border-red-500'
-                  : 'bg-yellow-50 border-yellow-500'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <AlertTriangle
-                      className={`w-4 h-4 ${
+          alerts.map((alert, index) => {
+            const formattedTime = new Date(alert.timestamp).toLocaleString();
+
+            return (
+              <div
+                key={
+                  alert.id ??
+                  `${alert.deviceId}-${alert.timestamp}-${index}`
+                }
+                className={`p-4 rounded-lg border-l-4 transition-all ${
+                  alert.severity === 'critical'
+                    ? 'bg-red-50 border-red-500'
+                    : 'bg-yellow-50 border-yellow-500'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertTriangle
+                        className={`w-4 h-4 ${
+                          alert.severity === 'critical'
+                            ? 'text-red-600'
+                            : 'text-yellow-600'
+                        }`}
+                      />
+                      <span
+                        className={`${
+                          alert.severity === 'critical'
+                            ? 'text-red-900'
+                            : 'text-yellow-900'
+                        }`}
+                      >
+                        {alert.alertType}
+                      </span>
+                    </div>
+
+                    <p
+                      className={`text-sm mb-2 ${
                         alert.severity === 'critical'
-                          ? 'text-red-600'
-                          : 'text-yellow-600'
-                      }`}
-                    />
-                    <span
-                      className={`${
-                        alert.severity === 'critical'
-                          ? 'text-red-900'
-                          : 'text-yellow-900'
+                          ? 'text-red-700'
+                          : 'text-yellow-700'
                       }`}
                     >
-                      {alert.alertType}
-                    </span>
+                      {alert.description}
+                    </p>
+
+                    <div className="flex items-center gap-4 text-xs text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{formattedTime}</span>
+                      </div>
+                      <div className="px-2 py-1 bg-gray-100 rounded text-gray-700">
+                        Device: {alert.deviceId}
+                      </div>
+                    </div>
                   </div>
 
-                  <p
-                    className={`text-sm mb-2 ${
-                      alert.severity === 'critical'
-                        ? 'text-red-700'
-                        : 'text-yellow-700'
-                    }`}
-                  >
-                    {alert.description}
-                  </p>
+                  <div className="flex flex-col gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onViewDetails(alert.id)}
+                    >
+                      View Details →
+                    </Button>
 
-                  <div className="flex items-center gap-4 text-xs text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{alert.timestamp}</span>
-                    </div>
-                    <div className="px-2 py-1 bg-gray-100 rounded text-gray-700">
-                      Device: {alert.deviceId}
-                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={alert.acknowledged}
+                      onClick={() =>
+                        !alert.acknowledged &&
+                        onAcknowledge(alert.id)
+                      }
+                    >
+                      {alert.acknowledged
+                        ? 'Acknowledged'
+                        : 'Acknowledge'}
+                    </Button>
                   </div>
                 </div>
-
-                {/* ✅ فقط View Details */}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onViewDetails(alert.id)}
-                  className="shrink-0"
-                >
-                  View Details →
-                </Button>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

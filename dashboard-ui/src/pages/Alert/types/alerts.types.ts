@@ -1,5 +1,5 @@
 export type AlertSeverity = 'critical' | 'warning' | 'info';
-export type AlertStatus = 'new' | 'acknowledged' | 'resolved';
+export type AlertStatus = 'JUST_GENERATED' | 'ACKNOWLEDGED' | 'CLININALLY_ASSESSED'|'CLOSED';
 
 export interface UIAlert {
   id: string;
@@ -9,6 +9,8 @@ export interface UIAlert {
   fullDescription: string;
   patientName: string;
   patientPhoto: string;
+  acknowledged: boolean;
+  alertType: string;   
   deviceId: string;
   timestamp: string;
   timestampDate: Date;
