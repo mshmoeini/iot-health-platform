@@ -51,8 +51,13 @@ def on_message(client, userdata, msg):
         "wristband_id": wristband_id,
         "alert_type": "HR",
         "value": hr,
-        "severity": severity
-        
+        "severity": severity,
+        "title": f"HR Alert: {severity}",
+        "description": f"Heart rate is {hr} bpm, which is considered {severity}.",
+        "full description": f"The heart rate recorded from wristband {wristband_id} is {hr} bpm. Immediate attention may be required.",
+        "heart_rate": hr,
+        "spo2": payload.get("spo2"),
+        "temperature": payload.get("temperature"),
     }
 
     client.publish(RISK_TOPIC, json.dumps(alert))
