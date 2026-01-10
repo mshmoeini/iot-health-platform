@@ -40,7 +40,8 @@ def get_dashboard_overview(storage: Storage) -> DashboardOverviewResponse:
     # --------------------------------------------------
 
     patients = storage.get_patients()
-    alerts = storage.list_alerts()
+    alerts = storage.list_alerts_with_wristband()
+
 
     # --------------------------------------------------
     # 2. System overview counters

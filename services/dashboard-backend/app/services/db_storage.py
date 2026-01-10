@@ -27,6 +27,23 @@ class SQLiteStorage(Storage):
             """).fetchall()
             return [dict(row) for row in rows]
 
+    def list_alerts_with_wristband(self):
+        """
+        Return alerts joined with wristband_id through assignment.
+        """
+        with self._connect() as conn:
+            rows = conn.execute("""
+                SELECT
+                    a.*,
+                    wa.wristband_id
+                FROM ALERT a
+                JOIN WRISTBAND_ASSIGNMENT wa
+                  ON a.assignment_id = wa.assignment_id
+                ORDER BY a.generated_at DESC
+            """).fetchall()
+
+        return [dict(row) for row in rows]
+
     def list_unacknowledged_alerts(
         self,
         limit: Optional[int] = None
