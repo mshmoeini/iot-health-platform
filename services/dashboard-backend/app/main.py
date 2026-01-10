@@ -2,20 +2,25 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import patients, vitals, alerts
-# NEW: dashboard router
-from app.api import dashboard
+# frontend repository imports would go here
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="Dashboard Backend API",
     version="0.1.0",
 )
 
-# --- CORS (UI can call backend safely) ---
-allowed_origins = [
-    "http://localhost:5173",  # Vite default
-    "http://localhost:5174",  # اگر پورت شما اینه
-    "http://localhost:3000",  # React dev server
-]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # فرانت Vite
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+# fronend done
+# app = FastAPI(title="Dashboard Backend API")
 
 app.add_middleware(
     CORSMiddleware,
