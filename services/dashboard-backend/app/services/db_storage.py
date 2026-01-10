@@ -1,7 +1,8 @@
-# app/services/db_storage.py
 import sqlite3
 from typing import List, Dict, Optional
+
 from app.services.storage import Storage
+from app.models.schemas import AlertStatus
 
 
 class SQLiteStorage(Storage):
@@ -13,7 +14,10 @@ class SQLiteStorage(Storage):
         conn.row_factory = sqlite3.Row
         return conn
 
-    # -------- Alerts --------
+    # --------------------------------------------------
+    # Alerts
+    # --------------------------------------------------
+
     def list_alerts(self) -> List[Dict]:
         with self._connect() as conn:
             rows = conn.execute("""
@@ -22,6 +26,35 @@ class SQLiteStorage(Storage):
                 ORDER BY generated_at DESC
             """).fetchall()
             return [dict(row) for row in rows]
+
+    def list_unacknowledged_alerts(
+        self,
+        limit: Optional[int] = None
+    ) -> List[Dict]:
+        query = """
+            SELECT *
+            FROM ALERT
+            WHERE status != ?
+            ORDER BY generated_at DESC
+        """
+        params = [AlertStatus.ACKNOWLEDGED]
+
+        if limit is not None:
+            query += " LIMIT ?"
+            params.append(limit)
+
+        with self._connect() as conn:
+            rows = conn.execute(query, params).fetchall()
+            return [dict(row) for row in rows]
+
+    def count_unacknowledged_alerts(self) -> int:
+        with self._connect() as conn:
+            row = conn.execute("""
+                SELECT COUNT(*) AS cnt
+                FROM ALERT
+                WHERE status != ?
+            """, (AlertStatus.ACKNOWLEDGED,)).fetchone()
+            return row["cnt"]
 
     def acknowledge_alert(
         self,
@@ -33,16 +66,24 @@ class SQLiteStorage(Storage):
             conn.execute("""
                 UPDATE ALERT
                 SET
-                    status = 'ACKNOWLEDGED',
+                    status = ?,
                     acknowledged_at = CURRENT_TIMESTAMP,
                     reviewed_at = CURRENT_TIMESTAMP,
                     reviewed_by = ?,
                     clinical_note = ?
                 WHERE alert_id = ?
-            """, (reviewed_by, clinical_note, alert_id))
+            """, (
+                AlertStatus.ACKNOWLEDGED,
+                reviewed_by,
+                clinical_note,
+                alert_id,
+            ))
             conn.commit()
 
-    # -------- Patients --------
+    # --------------------------------------------------
+    # Patients
+    # --------------------------------------------------
+
     def get_patients(self) -> List[Dict]:
         with self._connect() as conn:
             rows = conn.execute("""
@@ -51,7 +92,10 @@ class SQLiteStorage(Storage):
             """).fetchall()
             return [dict(row) for row in rows]
 
-    # -------- Vitals --------
+    # --------------------------------------------------
+    # Vitals
+    # --------------------------------------------------
+
     def get_latest_vitals(self, patient_id: int) -> Optional[Dict]:
         with self._connect() as conn:
             row = conn.execute("""
@@ -67,11 +111,38 @@ class SQLiteStorage(Storage):
 
             return dict(row) if row else None
 
+    def get_latest_vitals_with_battery(
+        self,
+        patient_id: int
+    ) -> Optional[Dict]:
+        """
+        Return the latest vitals row including battery level
+        for the given patient.
+        """
+        vitals = self.get_latest_vitals(patient_id)
+        if not vitals:
+            return None
+
+        # battery_level column must exist in VITAL_MEASUREMENT
+        return {
+            "battery_level": vitals.get("battery_level"),
+            "measured_at": vitals.get("measured_at"),
+        }
+    
+ # --------------------------------------------------
+    # Vitals histpry
+    # --------------------------------------------------
+
     def get_vitals_history(
         self,
         patient_id: int,
         limit: int = 50
     ) -> List[Dict]:
+        """
+        Return vitals history for a patient (latest first).
+
+        This method is required by the Storage abstract interface.
+        """
         with self._connect() as conn:
             rows = conn.execute("""
                 SELECT vm.*
