@@ -40,7 +40,7 @@ def get_dashboard_overview(storage: Storage) -> DashboardOverviewResponse:
     # --------------------------------------------------
 
     patients = storage.get_patients()
-    alerts = storage.list_alerts_with_wristband()
+    alerts = storage.list_alerts_enriched()
 
 
     # --------------------------------------------------
@@ -64,16 +64,16 @@ def get_dashboard_overview(storage: Storage) -> DashboardOverviewResponse:
     # --------------------------------------------------
     # 3. Risk statistics
     # --------------------------------------------------
-
+    print("[DEBUG] Total alerts fetched for stats:", len(alerts))
     patients_in_risk = _count_patients_in_risk(alerts)
-
+    print("[DEBUG] Patients in risk:", patients_in_risk)
     low_battery_devices = _count_low_battery_devices(storage)
-
+    print("[DEBUG] Low battery devices:", low_battery_devices)
     stats = DashboardStatsSchema(
         patients_in_risk=patients_in_risk,
         low_battery_devices=low_battery_devices,
     )
-
+    print("[DEBUG] Stats computed:", stats)
     # --------------------------------------------------
     # 4. Recent alerts preview (UI-ready)
     # --------------------------------------------------
@@ -108,15 +108,17 @@ def _count_active_devices(storage: Storage) -> int:
     return len(patients)
 
 
-def _count_patients_in_risk(alerts: List[Dict]) -> int:
+def _count_patients_in_risk(alerts):
     """
-    Count unique patients that currently require attention.
-
-    A patient is considered 'in risk' if:
-    - At least one unacknowledged alert exists
-    - Alert severity is WARNING or CRITICAL
+    Count unique patients that currently have unacknowledged
+    WARNING or CRITICAL alerts.
     """
-
+    print("[DEBUG] Total alerts fetched:", len(alerts))
+    for i, alert in enumerate(alerts[:5]):  # فقط 5 تای اول برای دیباگ
+        print("[DEBUG] alert keys:", list(alert.keys()))
+        print("[DEBUG] status:", alert.get("status"), type(alert.get("status")))
+        print("[DEBUG] severity:", alert.get("severity"), type(alert.get("severity")))
+        print("[DEBUG] patient_id:", alert.get("patient_id"), type(alert.get("patient_id")))
     risky_patients = set()
 
     for alert in alerts:
@@ -131,16 +133,20 @@ def _count_patients_in_risk(alerts: List[Dict]) -> int:
     return len(risky_patients)
 
 
+
 def _count_low_battery_devices(storage: Storage) -> int:
     """
     Count devices whose latest battery level is below the defined threshold.
 
     Battery level is extracted from the latest vitals of each patient/device.
     """
-
+    print("[DEBUG] Counting low battery devices...")
     count = 0
     patients = storage.get_patients()
-
+    for p in patients[:5]:
+            vitals = storage.get_latest_vitals(p["patient_id"])
+            print("[DEBUG] patient_id:", p["patient_id"])
+            print("[DEBUG] latest vitals:", vitals)
     for patient in patients:
         vitals = storage.get_latest_vitals(patient["patient_id"])
         if not vitals:

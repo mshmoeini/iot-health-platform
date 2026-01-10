@@ -43,6 +43,26 @@ class SQLiteStorage(Storage):
             """).fetchall()
 
         return [dict(row) for row in rows]
+    
+    
+    def list_alerts_enriched(self):
+        """
+        Return alerts enriched with wristband_id and patient_id
+        via WRISTBAND_ASSIGNMENT join.
+        """
+        with self._connect() as conn:
+            rows = conn.execute("""
+                SELECT
+                    a.*,
+                    wa.wristband_id,
+                    wa.patient_id
+                FROM ALERT a
+                JOIN WRISTBAND_ASSIGNMENT wa
+                  ON a.assignment_id = wa.assignment_id
+                ORDER BY a.generated_at DESC
+            """).fetchall()
+
+            return [dict(row) for row in rows]
 
     def list_unacknowledged_alerts(
         self,
