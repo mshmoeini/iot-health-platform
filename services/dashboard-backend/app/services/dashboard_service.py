@@ -11,26 +11,29 @@ from app.models.schemas import (
     AlertSeverity,
 )
 
+# --------------------------------------------------
+# Constants
+# --------------------------------------------------
 
-LOW_BATTERY_THRESHOLD = 30          # percentage
-RECENT_ALERTS_LIMIT = 5             # max alerts shown on dashboard
+LOW_BATTERY_THRESHOLD = 30      # Battery percentage threshold
+RECENT_ALERTS_LIMIT = 5         # Max alerts shown on dashboard
+
 RISK_SEVERITIES = {
     AlertSeverity.CRITICAL,
     AlertSeverity.WARNING,
 }
 
 
+# ======================================================
+# Main service function
+# ======================================================
+
 def get_dashboard_overview(storage: Storage) -> DashboardOverviewResponse:
     """
     Build and return aggregated data for the Dashboard Overview page.
 
-    Responsibilities:
-    - Aggregate system-wide counters (devices, patients, alerts)
-    - Compute risk-related statistics
-    - Detect low-battery devices
-    - Build UI-ready recent alerts preview
-
-    This function contains NO SQL and NO FastAPI logic.
+    این تابع داده‌های موردنیاز داشبورد را تجمیع می‌کند
+    و هیچ دانشی از SQL یا FastAPI ندارد.
     """
 
     now = datetime.now(timezone.utc)
@@ -40,42 +43,32 @@ def get_dashboard_overview(storage: Storage) -> DashboardOverviewResponse:
     # --------------------------------------------------
 
     patients = storage.get_patients()
-    alerts = storage.list_alerts_enriched()
-
+    alerts = storage.list_alerts()
 
     # --------------------------------------------------
-    # 2. System overview counters
+    # 2. System overview section
     # --------------------------------------------------
-
-    patients_monitored = len(patients)
-
-    active_alerts = [
-        alert for alert in alerts
-        if alert.get("status") != AlertStatus.ACKNOWLEDGED
-    ]
 
     system_overview = SystemOverviewSchema(
-        active_devices=_count_active_devices(storage),
-        patients_monitored=patients_monitored,
-        active_alerts=len(active_alerts),
+        active_devices=_count_active_devices(patients),
+        patients_monitored=len(patients),
+        active_alerts=_count_active_alerts(alerts),
         last_update=now,
     )
 
     # --------------------------------------------------
-    # 3. Risk statistics
+    # 3. Dashboard statistics
     # --------------------------------------------------
-    print("[DEBUG] Total alerts fetched for stats:", len(alerts))
-    patients_in_risk = _count_patients_in_risk(alerts)
-    print("[DEBUG] Patients in risk:", patients_in_risk)
-    low_battery_devices = _count_low_battery_devices(storage)
-    print("[DEBUG] Low battery devices:", low_battery_devices)
+
     stats = DashboardStatsSchema(
-        patients_in_risk=patients_in_risk,
-        low_battery_devices=low_battery_devices,
+        patients_in_risk=_count_patients_in_risk(alerts),
+        low_battery_devices=storage.count_low_battery_devices(
+            LOW_BATTERY_THRESHOLD
+        ),
     )
-    print("[DEBUG] Stats computed:", stats)
+
     # --------------------------------------------------
-    # 4. Recent alerts preview (UI-ready)
+    # 4. Recent alerts preview
     # --------------------------------------------------
 
     recent_alerts = _build_recent_alerts(alerts)
@@ -91,34 +84,41 @@ def get_dashboard_overview(storage: Storage) -> DashboardOverviewResponse:
 # Helper functions (internal logic)
 # ======================================================
 
-def _count_active_devices(storage: Storage) -> int:
+def _count_active_devices(patients: List[Dict]) -> int:
     """
     Count active devices.
 
     Definition:
-    - Devices with an active assignment
-    - Devices that recently sent valid vitals
+    - Each patient with an active wristband assignment
+      is considered one active device.
 
-    NOTE:
-    This logic can evolve without impacting API consumers.
+    شمارش دستگاه‌های فعال (assignment فعال).
     """
-    # Simplest version: number of patients with active assignments
-    # Can be refined later if device table is introduced
-    patients = storage.get_patients()
-    return len(patients)
+    return len([
+        p for p in patients
+        if p.get("wristband_id") is not None
+    ])
 
 
-def _count_patients_in_risk(alerts):
+def _count_active_alerts(alerts: List[Dict]) -> int:
     """
-    Count unique patients that currently have unacknowledged
-    WARNING or CRITICAL alerts.
+    Count unacknowledged alerts.
+
+    شمارش هشدارهایی که هنوز acknowledge نشده‌اند.
     """
-    print("[DEBUG] Total alerts fetched:", len(alerts))
-    for i, alert in enumerate(alerts[:5]):  # فقط 5 تای اول برای دیباگ
-        print("[DEBUG] alert keys:", list(alert.keys()))
-        print("[DEBUG] status:", alert.get("status"), type(alert.get("status")))
-        print("[DEBUG] severity:", alert.get("severity"), type(alert.get("severity")))
-        print("[DEBUG] patient_id:", alert.get("patient_id"), type(alert.get("patient_id")))
+    return len([
+        a for a in alerts
+        if a.get("status") != AlertStatus.ACKNOWLEDGED
+    ])
+
+
+def _count_patients_in_risk(alerts: List[Dict]) -> int:
+    """
+    Count unique patients that currently have
+    unacknowledged WARNING or CRITICAL alerts.
+
+    شمارش بیماران منحصربه‌فرد در وضعیت ریسک.
+    """
     risky_patients = set()
 
     for alert in alerts:
@@ -126,37 +126,11 @@ def _count_patients_in_risk(alerts):
             alert.get("status") != AlertStatus.ACKNOWLEDGED
             and alert.get("severity") in RISK_SEVERITIES
         ):
-            patient_id = alert.get("patient_id")
-            if patient_id is not None:
-                risky_patients.add(patient_id)
+            patient_name = alert.get("patient_name")
+            if patient_name:
+                risky_patients.add(patient_name)
 
     return len(risky_patients)
-
-
-
-def _count_low_battery_devices(storage: Storage) -> int:
-    """
-    Count devices whose latest battery level is below the defined threshold.
-
-    Battery level is extracted from the latest vitals of each patient/device.
-    """
-    print("[DEBUG] Counting low battery devices...")
-    count = 0
-    patients = storage.get_patients()
-    for p in patients[:5]:
-            vitals = storage.get_latest_vitals(p["patient_id"])
-            print("[DEBUG] patient_id:", p["patient_id"])
-            print("[DEBUG] latest vitals:", vitals)
-    for patient in patients:
-        vitals = storage.get_latest_vitals(patient["patient_id"])
-        if not vitals:
-            continue
-
-        battery_level = vitals.get("battery_level")
-        if battery_level is not None and battery_level < LOW_BATTERY_THRESHOLD:
-            count += 1
-
-    return count
 
 
 def _build_recent_alerts(alerts: List[Dict]) -> List[RecentAlertSchema]:
@@ -167,6 +141,8 @@ def _build_recent_alerts(alerts: List[Dict]) -> List[RecentAlertSchema]:
     - Only unacknowledged alerts
     - Sorted by generated_at DESC
     - Limited to RECENT_ALERTS_LIMIT
+
+    ساخت لیست هشدارهای اخیر برای نمایش در داشبورد.
     """
 
     unacknowledged_alerts = [
@@ -183,17 +159,18 @@ def _build_recent_alerts(alerts: List[Dict]) -> List[RecentAlertSchema]:
     recent_alerts: List[RecentAlertSchema] = []
 
     for alert in unacknowledged_alerts[:RECENT_ALERTS_LIMIT]:
-        wristband_id = alert.get("wristband_id")
-
         recent_alerts.append(
             RecentAlertSchema(
                 alert_id=alert["alert_id"],
                 severity=alert["severity"],
                 alert_type=alert.get("alert_type", "Unknown"),
-                description=alert.get("description", ""),
-                device_id=_map_wristband_to_device_id(wristband_id),
+                description=alert.get("message", ""),
+                device_id=_map_wristband_to_device_id(
+                    alert.get("wristband_id")
+                ),
                 generated_at=alert["generated_at"],
-                acknowledged=alert.get("status") == AlertStatus.ACKNOWLEDGED,
+                acknowledged=False,
+                patient_name=alert.get("patient_name"),
             )
         )
 
@@ -202,7 +179,9 @@ def _build_recent_alerts(alerts: List[Dict]) -> List[RecentAlertSchema]:
 
 def _map_wristband_to_device_id(wristband_id: int | None) -> str:
     """
-    Map internal wristband_id to a UI-friendly device_id string.
+    Map internal wristband_id to a UI-friendly device_id.
+
+    تبدیل wristband_id داخلی به device_id قابل نمایش در UI.
     """
     if wristband_id is None:
         return "UNKNOWN"
