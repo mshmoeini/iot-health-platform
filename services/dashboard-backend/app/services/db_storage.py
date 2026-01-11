@@ -444,20 +444,37 @@ class SQLiteStorage(Storage):
 
     def list_wristbands(self):
         """
-        Return all wristbands in the system.
+        Return all wristbands with assigned patient name (if any).
+
+        اگر دستبند به بیماری assign شده باشد:
+            assignedTo = patient_name
+        اگر assign نشده باشد:
+            assignedTo = None
         """
         with self._connect() as conn:
-            rows = conn.execute(
-                """
+            rows = conn.execute("""
                 SELECT
-                    wristband_id,
-                    created_at
-                FROM WRISTBAND
-                ORDER BY wristband_id
-                """
-            ).fetchall()
+                    w.wristband_id,
+                    w.created_at,
+                    p.name AS assigned_to
+                FROM WRISTBAND w
+                LEFT JOIN WRISTBAND_ASSIGNMENT wa
+                    ON wa.wristband_id = w.wristband_id
+                    AND wa.end_date IS NULL
+                LEFT JOIN PATIENT p
+                    ON p.patient_id = wa.patient_id
+                ORDER BY w.wristband_id
+            """).fetchall()
 
-        return [dict(r) for r in rows]
+            return [
+                {
+                    "wristband_id": r["wristband_id"],
+                    "created_at": r["created_at"],
+                    "assignedTo": r["assigned_to"],  # None if not assigned
+                }
+                for r in rows
+            ]
+
 
 
     def list_available_wristbands(self):
