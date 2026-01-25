@@ -80,12 +80,11 @@ class Storage(ABC):
     @abstractmethod
     def get_vitals_history(
         self,
-        assignment_id: int,
+        patient_id: int,
         limit: int = 50
     ) -> List[Dict]:
         """
-        Return vitals history for a specific assignment.
-
+        Return vitals history for a specific patient.
         This guarantees that vitals belong to the same patient-device
         relationship over time.
 

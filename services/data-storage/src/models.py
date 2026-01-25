@@ -11,6 +11,9 @@ from storage.base import Base
 from datetime import datetime
 
 
+# ----------------------------
+# Core domain entities
+# ----------------------------
 class Wristband(Base):
     __tablename__ = "WRISTBAND"
 
@@ -23,6 +26,7 @@ class Patient(Base):
 
     patient_id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
+
     threshold_profile = Column(
         String(30),
         CheckConstraint(
@@ -37,12 +41,19 @@ class WristbandAssignment(Base):
     __tablename__ = "WRISTBAND_ASSIGNMENT"
 
     assignment_id = Column(Integer, primary_key=True, autoincrement=True)
-    wristband_id = Column(Integer, ForeignKey("WRISTBAND.wristband_id"), nullable=False)
-    patient_id = Column(Integer, ForeignKey("PATIENT.patient_id"), nullable=False)
+    wristband_id = Column(
+        Integer, ForeignKey("WRISTBAND.wristband_id"), nullable=False
+    )
+    patient_id = Column(
+        Integer, ForeignKey("PATIENT.patient_id"), nullable=False
+    )
     start_date = Column(DateTime, nullable=False, default=datetime.utcnow)
     end_date = Column(DateTime)
 
 
+# ----------------------------
+# Measurements
+# ----------------------------
 class VitalMeasurement(Base):
     __tablename__ = "VITAL_MEASUREMENT"
 
@@ -63,6 +74,10 @@ class VitalMeasurement(Base):
         CheckConstraint("battery_level BETWEEN 0 AND 100"),
     )
 
+
+# ----------------------------
+# Alerts (final, UI-ready)
+# ----------------------------
 class Alert(Base):
     __tablename__ = "ALERT"
 
@@ -74,15 +89,22 @@ class Alert(Base):
         nullable=False,
     )
 
+    # Timestamps
     generated_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     acknowledged_at = Column(DateTime)
     reviewed_at = Column(DateTime)
+
+    # Clinical workflow
     reviewed_by = Column(String(50))
     clinical_note = Column(String)
 
-    message = Column(String, nullable=False)
+    # Alert classification
     alert_type = Column(String(30), nullable=False)
-    severity = Column(String(20), nullable=False)
+    severity = Column(
+        String(20),
+        CheckConstraint("severity IN ('normal','warning','critical')"),
+        nullable=False,
+    )
 
     status = Column(
         String(30),
@@ -99,3 +121,10 @@ class Alert(Base):
     )
 
     threshold_profile = Column(String(30), nullable=False)
+
+    # UI-focused fields
+    metric = Column(String(30), nullable=False)
+    value = Column(Float, nullable=False)
+
+    description = Column(String, nullable=False)
+    full_description = Column(String, nullable=False)

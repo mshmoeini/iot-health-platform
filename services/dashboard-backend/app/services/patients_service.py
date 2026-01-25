@@ -19,8 +19,6 @@ RISK_CRITICAL = "CRITICAL"
 def _map_wristband_to_device_id(wristband_id: Optional[int]) -> Optional[str]:
     """
     Convert internal wristband_id to UI-friendly device_id.
-
-    تبدیل wristband_id داخلی به device_id قابل نمایش در UI
     """
     if wristband_id is None:
         return None
@@ -30,13 +28,7 @@ def _map_wristband_to_device_id(wristband_id: Optional[int]) -> Optional[str]:
 def _compute_risk_status(latest_alert_severity: Optional[str]) -> str:
     """
     Compute patient risk status based on latest active alert severity.
-
-    منطق:
-    - اگر alert فعال وجود نداشته باشد → NORMAL
-    - اگر آخرین alert CRITICAL باشد → CRITICAL
-    - اگر WARNING باشد → WARNING
     """
-
     if latest_alert_severity == RISK_CRITICAL:
         return RISK_CRITICAL
 
@@ -47,20 +39,17 @@ def _compute_risk_status(latest_alert_severity: Optional[str]) -> str:
 
 
 # --------------------------------------------------
-# Main service function
+# Patients overview
 # --------------------------------------------------
 
 def get_patients_overview(storage: Storage) -> Dict:
     """
     Build UI-ready patients list for Patients page.
-
-    این تابع:
-    - دیتای خام را از storage می‌گیرد
-    - منطق بیزنسی (risk status و mapping) را اعمال می‌کند
-    - خروجی نهایی مناسب UI می‌سازد
     """
 
-    rows = storage.get_patients_overview()
+    # ✅ FIX: storage layer فقط دیتای خام می‌دهد
+    rows = storage.get_patients()
+
     items: List[Dict] = []
 
     for row in rows:
@@ -68,10 +57,9 @@ def get_patients_overview(storage: Storage) -> Dict:
         latest_alert_severity = row.get("latest_alert_severity")
 
         risk_status = _compute_risk_status(latest_alert_severity)
-
         has_active_alert = latest_alert_severity is not None
 
-        item = {
+        items.append({
             # -------------------------
             # Patient identity
             # -------------------------
@@ -88,7 +76,7 @@ def get_patients_overview(storage: Storage) -> Dict:
             "device_status": "ACTIVE" if wristband_id else "INACTIVE",
 
             # -------------------------
-            # Latest vitals (may be None)
+            # Latest vitals (optional)
             # -------------------------
             "vitals": {
                 "heart_rate": row.get("heart_rate"),
@@ -103,48 +91,62 @@ def get_patients_overview(storage: Storage) -> Dict:
             "risk_status": risk_status,
             "has_active_alert": has_active_alert,
             "last_update": row.get("last_update"),
-        }
-
-        items.append(item)
+        })
 
     return {"items": items}
 
 
-def get_patient_alerts(storage: Storage, patient_id: int) -> dict:
+# --------------------------------------------------
+# Patient alerts
+# --------------------------------------------------
+
+def get_patient_alerts(storage: Storage, patient_id: int) -> Dict:
     """
     Build UI-ready alerts list for a single patient.
     """
     rows = storage.get_patient_alerts(patient_id)
-    items = []
+    items: List[Dict] = []
 
     for row in rows:
         wristband_id = row.get("wristband_id")
 
         items.append({
             "alert_id": row["alert_id"],
+            "assignment_id": row["assignment_id"],
+            "generated_at": row["generated_at"],
+
+            # Alert content
             "severity": row["severity"],
             "status": row["status"],
             "alert_type": row["alert_type"],
-            "description": row["message"],
-            "device_id": f"WB-{wristband_id}" if wristband_id else None,
-            "generated_at": row["generated_at"],
+            "threshold_profile": row.get("threshold_profile"),
+
+            "description": row.get("description"),
+            "full_description": row.get("full_description"),
+
+            "metric": row.get("metric"),
+            "value": row.get("value"),
+
+            # Device
+            "device_id": _map_wristband_to_device_id(wristband_id),
         })
 
     return {"items": items}
 
 
+# --------------------------------------------------
+# Create / Update
+# --------------------------------------------------
+
 def create_patient(storage: Storage, payload: dict) -> dict:
     """
     Create patient and optionally assign a wristband.
     """
-
     wristband_id = payload.pop("wristband_id", None)
 
-    # 1. Create patient
     patient = storage.create_patient(payload)
     patient_id = patient["patient_id"]
 
-    # 2. Assign wristband if provided
     if wristband_id is not None:
         storage.assign_wristband(
             patient_id=patient_id,
@@ -152,6 +154,7 @@ def create_patient(storage: Storage, payload: dict) -> dict:
         )
 
     return patient
+
 
 def get_patient_detail(storage: Storage, patient_id: int) -> dict:
     """
@@ -174,7 +177,7 @@ def get_patient_detail(storage: Storage, patient_id: int) -> dict:
         "gender": row.get("gender"),
         "phone": row.get("phone"),
 
-        "device_id": f"WB-{wristband_id}" if wristband_id else None,
+        "device_id": _map_wristband_to_device_id(wristband_id),
         "device_status": "ACTIVE" if wristband_id else "INACTIVE",
 
         "vitals": {

@@ -1,125 +1,133 @@
 {
-  "profiles": {
-    "STANDARD": {
-      "hr": {
-        "normal": [60, 100],
-        "warning": [100, 120],
-        "critical": [120, null]
-      },
-      "spo2": {
-        "normal": [95, 100],
-        "warning": [90, 95],
-        "critical": [null, 90]
-      },
-      "temperature": {
-        "normal": [36.0, 37.5],
-        "warning": [37.5, 38.5],
-        "critical": [38.5, null]
-      },
-      "battery": {
-        "normal": [50, 100],
-        "warning": [20, 50],
-        "critical": [0, 20]
-      }
-    },
-
-    "CARDIAC": {
-      "hr": {
-        "normal": [60, 90],
-        "warning": [90, 110],
-        "critical": [110, null]
-      },
-      "spo2": {
-        "normal": [95, 100],
-        "warning": [90, 95],
-        "critical": [null, 90]
-      },
-      "temperature": {
-        "normal": [36.0, 37.4],
-        "warning": [37.4, 38.2],
-        "critical": [38.2, null]
-      },
-      "battery": {
-        "normal": [50, 100],
-        "warning": [20, 50],
-        "critical": [0, 20]
-      }
-    },
-
-    "ELDERLY": {
-      "hr": {
-        "normal": [55, 95],
-        "warning": [95, 115],
-        "critical": [115, null]
-      },
-      "spo2": {
-        "normal": [94, 100],
-        "warning": [90, 94],
-        "critical": [null, 90]
-      },
-      "temperature": {
-        "normal": [35.8, 37.3],
-        "warning": [37.3, 38.0],
-        "critical": [38.0, null]
-      },
-      "battery": {
-        "normal": [50, 100],
-        "warning": [20, 50],
-        "critical": [0, 20]
-      }
-    },
-
-    "RESPIRATORY_RISK": {
-      "hr": {
-        "normal": [60, 100],
-        "warning": [100, 120],
-        "critical": [120, null]
-      },
-      "spo2": {
-        "normal": [94, 100],
-        "warning": [90, 94],
-        "critical": [null, 90]
-      },
-      "temperature": {
-        "normal": [36.0, 37.5],
-        "warning": [37.5, 38.3],
-        "critical": [38.3, null]
-      },
-      "battery": {
-        "normal": [50, 100],
-        "warning": [20, 50],
-        "critical": [0, 20]
-      }
-    },
-
-    "HIGH_RISK": {
-      "hr": {
-        "normal": [60, 90],
-        "warning": [90, 110],
-        "critical": [110, null]
-      },
-      "spo2": {
-        "normal": [94, 100],
-        "warning": [90, 94],
-        "critical": [null, 90]
-      },
-      "temperature": {
-        "normal": [36.0, 37.3],
-        "warning": [37.3, 38.0],
-        "critical": [38.0, null]
-      },
-      "battery": {
-        "normal": [50, 100],
-        "warning": [20, 50],
-        "critical": [0, 20]
-      }
-    }
+  "metadata": {
+    "description": "Health thresholds for risk analysis based on patient profiles",
+    "owner": "health-catalog",
+    "used_by": ["risk-analysis-service"],
+    "version": "1.0"
   },
 
   "defaults": {
     "profile": "STANDARD"
   },
 
+  "levels": ["normal", "warning", "critical"],
+
   "supported_vitals": ["hr", "spo2", "temperature", "battery"],
-  "levels": ["normal", "warning", "critical"]
+
+  "profiles": {
+    "STANDARD": {
+      "hr": {
+        "NORMAL": [60, 100],
+        "WARNING": [100, 120],
+        "CRITICAL": [120, null]
+      },
+      "spo2": {
+        "NORMAL": [95, 100],
+        "WARNING": [90, 95],
+        "CRITICAL": [null, 90]
+      },
+      "temperature": {
+        "NORMAL": [36.0, 37.5],
+        "WARNING": [37.5, 38.5],
+        "CRITICAL": [38.5, null]
+      },
+      "battery": {
+        "NORMAL": [50, 100],
+        "WARNING": [20, 50],
+        "CRITICAL": [0, 20]
+      }
+    },
+
+    "CARDIAC": {
+      "hr": {
+        "NORMAL": [60, 90],
+        "WARNING": [90, 110],
+        "CRITICAL": [110, null]
+      },
+      "spo2": {
+        "NORMAL": [95, 100],
+        "WARNING": [90, 95],
+        "CRITICAL": [null, 90]
+      },
+      "temperature": {
+        "NORMAL": [36.0, 37.4],
+        "WARNING": [37.4, 38.2],
+        "CRITICAL": [38.2, null]
+      },
+      "battery": {
+        "NORMAL": [50, 100],
+        "WARNING": [20, 50],
+        "CRITICAL": [0, 20]
+      }
+    },
+
+    "ELDERLY": {
+      "hr": {
+        "NORMAL": [55, 95],
+        "WARNING": [95, 115],
+        "CRITICAL": [115, null]
+      },
+      "spo2": {
+        "NORMAL": [94, 100],
+        "WARNING": [90, 94],
+        "CRITICAL": [null, 90]
+      },
+      "temperature": {
+        "NORMAL": [35.8, 37.3],
+        "WARNING": [37.3, 38.0],
+        "CRITICAL": [38.0, null]
+      },
+      "battery": {
+        "NORMAL": [50, 100],
+        "WARNING": [20, 50],
+        "CRITICAL": [0, 20]
+      }
+    },
+
+    "RESPIRATORY_RISK": {
+      "hr": {
+        "NORMAL": [60, 100],
+        "WARNING": [100, 120],
+        "CRITICAL": [120, null]
+      },
+      "spo2": {
+        "NORMAL": [94, 100],
+        "WARNING": [90, 94],
+        "CRITICAL": [null, 90]
+      },
+      "temperature": {
+        "NORMAL": [36.0, 37.5],
+        "WARNING": [37.5, 38.3],
+        "CRITICAL": [38.3, null]
+      },
+      "battery": {
+        "NORMAL": [50, 100],
+        "WARNING": [20, 50],
+        "CRITICAL": [0, 20]
+      }
+    },
+
+    "HIGH_RISK": {
+      "hr": {
+        "NORMAL": [60, 90],
+        "WARNING": [90, 110],
+        "CRITICAL": [110, null]
+      },
+      "spo2": {
+        "NORMAL": [94, 100],
+        "WARNING": [90, 94],
+        "CRITICAL": [null, 90]
+      },
+      "temperature": {
+        "NORMAL": [36.0, 37.3],
+        "WARNING": [37.3, 38.0],
+        "CRITICAL": [38.0, null]
+      },
+      "battery": {
+        "NORMAL": [50, 100],
+        "WARNING": [20, 50],
+        "CRITICAL": [0, 20]
+      }
+    }
+  }
 }

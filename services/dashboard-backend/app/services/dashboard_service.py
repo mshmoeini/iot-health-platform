@@ -114,23 +114,48 @@ def _count_active_alerts(alerts: List[Dict]) -> int:
 
 def _count_patients_in_risk(alerts: List[Dict]) -> int:
     """
-    Count unique patients that currently have
-    unacknowledged WARNING or CRITICAL alerts.
-
-    شمارش بیماران منحصربه‌فرد در وضعیت ریسک.
+    Count patients whose latest alert is CRITICAL.
     """
-    risky_patients = set()
+
+    latest_alert_per_patient: Dict[str, Dict] = {}
 
     for alert in alerts:
-        if (
-            alert.get("status") != AlertStatus.ACKNOWLEDGED
-            and alert.get("severity") in RISK_SEVERITIES
-        ):
-            patient_name = alert.get("patient_name")
-            if patient_name:
-                risky_patients.add(patient_name)
+        patient_name = alert.get("patient_name")
+        generated_at_raw = alert.get("generated_at")
 
-    return len(risky_patients)
+        if not patient_name or not generated_at_raw:
+            continue
+
+        # تبدیل string → datetime
+        if isinstance(generated_at_raw, str):
+            generated_at = datetime.fromisoformat(generated_at_raw)
+        else:
+            generated_at = generated_at_raw
+
+        current_latest = latest_alert_per_patient.get(patient_name)
+
+        if current_latest is None:
+            latest_alert_per_patient[patient_name] = {
+                **alert,
+                "_generated_at_dt": generated_at,
+            }
+            continue
+
+        if generated_at > current_latest["_generated_at_dt"]:
+            latest_alert_per_patient[patient_name] = {
+                **alert,
+                "_generated_at_dt": generated_at,
+            }
+    
+    # حالا شمارش
+    risky_count = 0
+
+    for alert in latest_alert_per_patient.values():
+        if alert.get("severity") == AlertSeverity.CRITICAL:
+            risky_count += 1
+    print(f"{risky_count} patients in risk found.")
+    return risky_count
+
 
 
 def _build_recent_alerts(alerts: List[Dict]) -> List[RecentAlertSchema]:
@@ -164,7 +189,8 @@ def _build_recent_alerts(alerts: List[Dict]) -> List[RecentAlertSchema]:
                 alert_id=alert["alert_id"],
                 severity=alert["severity"],
                 alert_type=alert.get("alert_type", "Unknown"),
-                description=alert.get("message", ""),
+                description=alert.get("description", ""),
+                full_description=alert.get("full_description", ""),
                 device_id=_map_wristband_to_device_id(
                     alert.get("wristband_id")
                 ),

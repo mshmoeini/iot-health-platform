@@ -27,8 +27,9 @@ services:
     volumes:
       - ../data:/app/data
     depends_on:
-      - mqtt-broker
       - health-catalog
+      - mqtt-broker
+
 
   dashboard-backend:
     build: ../services/dashboard-backend
@@ -38,9 +39,10 @@ services:
     volumes:
       - ../data:/app/data
     depends_on:
+      - health-catalog
       - data-storage
       - mqtt-broker
-      - health-catalog
+      
 
   risk_analysis:
     build: ../services/risk_analysis
@@ -50,9 +52,10 @@ services:
       - MQTT_PORT=1883
       - HEALTH_CATALOG_URL=http://health-catalog:8000
     depends_on:
+      - health-catalog
       - mqtt-broker
       - data-storage
-      - health-catalog
+      
 
   alert_notification:
     build: ../services/alert_notification
@@ -62,6 +65,7 @@ services:
       - MQTT_PORT=1883
       - HEALTH_CATALOG_URL=http://health-catalog:8000
     depends_on:
+      - health-catalog
       - mqtt-broker
       - data-storage
-      - health-catalog
+      

@@ -1,4 +1,16 @@
 {
+  "metadata": {
+    "description": "Alert taxonomy, lifecycle, and payload contract",
+    "owner": "health-catalog",
+    "used_by": [
+      "risk-analysis-service",
+      "alert-notification-service",
+      "data-storage-service",
+      "dashboard-backend"
+    ],
+    "version": "1.0"
+  },
+
   "threshold_profiles": [
     "STANDARD",
     "CARDIAC",
@@ -31,27 +43,7 @@
     }
   },
 
-  "db_mapping": {
-    "table": "ALERT",
-    "primary_key": "alert_id",
-    "foreign_keys": {
-      "assignment_id": "WRISTBAND_ASSIGNMENT.assignment_id"
-    },
-    "columns": {
-      "alert_type": "alert_type",
-      "severity": "severity",
-      "status": "status",
-      "threshold_profile": "threshold_profile",
-      "message": "message",
-      "generated_at": "generated_at",
-      "acknowledged_at": "acknowledged_at",
-      "reviewed_at": "reviewed_at",
-      "reviewed_by": "reviewed_by",
-      "clinical_note": "clinical_note"
-    }
-  },
-
-  "payload_schema": {
+  "payload_contract": {
     "required_fields": [
       "assignment_id",
       "alert_type",
@@ -72,7 +64,7 @@
   "example_payload": {
     "assignment_id": 42,
     "alert_type": "THRESHOLD_BREACH",
-    "severity": "HIGH",
+    "severity": "critical",
     "status": "JUST_GENERATED",
     "threshold_profile": "RESPIRATORY_RISK",
     "message": "SpO2 dropped below critical threshold",

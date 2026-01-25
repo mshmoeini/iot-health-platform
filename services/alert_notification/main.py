@@ -1,39 +1,129 @@
-import os
+import json
+import requests
 import paho.mqtt.client as mqtt
+from datetime import datetime
+
+# ----------------------------------
+# Health Catalog endpoints
+# ----------------------------------
+HEALTH_CATALOG_URL = "http://health-catalog:8000"
+
+MQTT_TOPICS_ENDPOINT = "/config/mqtt/topics"
+ALERTS_ENDPOINT = "/config/alerts"
+ENVIRONMENTS_ENDPOINT = "/config/environments"
 
 
-MQTT_HOST = os.getenv("MQTT_HOST", "mqtt-broker")
-MQTT_PORT = int(os.getenv("MQTT_PORT", 1883))
-RISK_TOPIC = "health/risk/#"
-ALERT_TOPIC = "health/alerts/{wristband_id}"
+# ----------------------------------
+# Global configs (loaded at startup)
+# ----------------------------------
+MQTT_TOPICS = {}
+ALERT_CONFIG = {}
+ENV_CONFIG = {}
 
+
+# ----------------------------------
+# Helpers
+# ----------------------------------
+def load_from_catalog(endpoint: str) -> dict:
+    response = requests.get(f"{HEALTH_CATALOG_URL}{endpoint}")
+    response.raise_for_status()
+    return response.json()["data"]
+
+
+def build_descriptions(event: dict):
+    """
+    Build short and full descriptions for UI
+    """
+    metric = event.get("vital")
+    value = event.get("value")
+    severity = event.get("severity")
+    wristband_id = event.get("wristband_id")
+
+    metric_label = metric.replace("_", " ").title()
+
+    short_description = f"{metric_label} above {severity} threshold"
+
+    full_description = (
+        f"The {metric_label.lower()} recorded from wristband "
+        f"WB-{wristband_id} was {value}, which exceeds the "
+        f"{severity} threshold and may require immediate medical attention."
+    )
+
+    return short_description, full_description
+
+
+# ----------------------------------
+# MQTT callbacks
+# ----------------------------------
 def on_connect(client, userdata, flags, rc):
-    print(f"[ALERT] connected to broker with rc={rc}")
-    client.subscribe(RISK_TOPIC)
-    print(f"[ALERT] subscribed to {RISK_TOPIC}")
+    print(f"[ALERT] Connected to MQTT broker (rc={rc})")
+
+    risk_topic = MQTT_TOPICS["mqtt_topics"]["risk_events"]["subscribe_pattern"]
+    client.subscribe(risk_topic, qos=1)
+
+    print(f"[ALERT] Subscribed to {risk_topic}")
+
 
 def on_message(client, userdata, msg):
-    print(f"[ALERT] message received on {msg.topic}")
-    print(f"[ALERT] payload: {msg.payload.decode()}")
+    print(f"[ALERT] Risk event received on {msg.topic}")
 
     try:
-        wristband_id = msg.topic.split('/')[2]
-    except IndexError:
-        print("[ALERT] invalid topic format")
-        return  
-    ALERT_TOPIC=f"health/alerts/{wristband_id}"
-    client.publish(ALERT_TOPIC, msg.payload)
-    print(f"[ALERT] alert forwarded to {ALERT_TOPIC}")
+        event = json.loads(msg.payload.decode())
+    except json.JSONDecodeError:
+        print("[ALERT] Invalid JSON payload")
+        return
 
+    # Build UI-friendly descriptions
+    short_desc, full_desc = build_descriptions(event)
+
+    # Final alert payload (UI + Storage ready)
+    alert = {
+        "assignment_id": event.get("wristband_id"),  # DB will resolve mapping
+        "alert_type": event.get("alert_type"),
+        "severity": event.get("severity"),
+        "status": ALERT_CONFIG["lifecycle"]["initial_status"],
+
+        "metric": event.get("vital"),
+        "value": event.get("value"),
+
+        "description": short_desc,
+        "full_description": full_desc,
+
+        "threshold_profile": event.get("threshold_profile"),
+        "generated_at": datetime.utcnow().isoformat()
+    }
+
+    alert_topic = MQTT_TOPICS["mqtt_topics"]["alerts"]["topic"]
+
+    client.publish(alert_topic, json.dumps(alert), qos=1)
+
+    print(f"[ALERT] Final alert published: {alert}")
+
+
+# ----------------------------------
+# Main
+# ----------------------------------
 def main():
-    print("[ALERT] service starting")
+    global MQTT_TOPICS, ALERT_CONFIG, ENV_CONFIG
 
-    client = mqtt.Client()
+    print("[ALERT] Alert Notification Service starting")
+
+    # Load configs from Health Catalog
+    MQTT_TOPICS = load_from_catalog(MQTT_TOPICS_ENDPOINT)
+    ALERT_CONFIG = load_from_catalog(ALERTS_ENDPOINT)
+    ENV_CONFIG = load_from_catalog(ENVIRONMENTS_ENDPOINT)
+
+    # Resolve active environment
+    active_env = ENV_CONFIG["active_environment"]
+    mqtt_conf = ENV_CONFIG["environments"][active_env]["mqtt"]
+
+    # MQTT client
+    client = mqtt.Client(client_id="alert-notification-service")
     client.on_connect = on_connect
     client.on_message = on_message
 
-    print(f"[ALERT] connecting to {MQTT_HOST}:{MQTT_PORT}")
-    client.connect(MQTT_HOST, MQTT_PORT)
+    print(f"[ALERT] Connecting to MQTT {mqtt_conf['host']}:{mqtt_conf['port']}")
+    client.connect(mqtt_conf["host"], mqtt_conf["port"])
 
     client.loop_forever()
 

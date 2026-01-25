@@ -6,9 +6,9 @@ router = APIRouter()
 
 
 @router.get("/")
-def get_thresholds():
+def get_alert_definitions():
     try:
-        data = load_config("thresholds.json")
+        data = load_config("alerts.json")
         return {
             "status": "success",
             "data": data,

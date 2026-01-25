@@ -22,19 +22,19 @@ def get_latest_vitals(db: Storage = Depends(get_storage)):
 
 
 @router.get(
-    "/{assignment_id}/history",
-    summary="Get vitals history for an assignment",
-    description="Return historical vital measurements for a specific assignment.",
+    "/{patient_id}/history",
+    summary="Get vitals history for a patient",
+    description="Return historical vital measurements for a specific patient.",
 )
 def get_vitals_history(
-    assignment_id: int,
+    patient_id: int,
     limit: int = 50,
     db: Storage = Depends(get_storage),
 ):
     """
-    Get vitals history for a specific assignment.
+    Get vitals history for a specific patient.
 
-    - Medical-safe (assignment-based)
+    - Medical-safe (patient-based)
     - Device reuse safe
     """
-    return db.get_vitals_history(assignment_id, limit)
+    return db.get_vitals_history(patient_id, limit)
