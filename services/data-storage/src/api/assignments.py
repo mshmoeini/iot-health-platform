@@ -40,3 +40,26 @@ def get_assignment_by_wristband(wristband_id: int):
         "patient_id": row.patient_id,
         "threshold_profile": row.threshold_profile,
     }
+
+@router.get("/active")
+def get_active_assignments():
+    """
+    Return all wristbands that currently have an active assignment.
+    Used by Wristband Simulator.
+    """
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text(
+                """
+                SELECT DISTINCT
+                    wa.wristband_id
+                FROM WRISTBAND_ASSIGNMENT wa
+                WHERE wa.end_date IS NULL
+                """
+            )
+        ).fetchall()
+
+    return [
+        {"wristband_id": row.wristband_id}
+        for row in rows
+    ]

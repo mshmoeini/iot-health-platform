@@ -97,4 +97,4 @@ class AlertMQTTSubscriber:
         )
         thread.start()
 
-        print("[DASHBOARD-MQTT] background subscriber started 🚀")
+        print("[DASHBOARD-MQTT] background subscriber started ")
