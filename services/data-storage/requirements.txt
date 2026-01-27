@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 paho-mqtt
 SQLAlchemy
 fastapi
+=======
+paho-mqtt
+SQLAlchemy
+fastapi
+>>>>>>> 166f8a9b86e641d57f616c5eae54d40036eea3c6
 uvicorn

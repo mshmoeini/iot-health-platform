@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "metadata": {
     "description": "Alert taxonomy, lifecycle, and payload contract",
@@ -71,3 +72,78 @@
     "generated_at": "2025-12-29T14:38:00Z"
   }
 }
+=======
+{
+  "metadata": {
+    "description": "Alert taxonomy, lifecycle, and payload contract",
+    "owner": "health-catalog",
+    "used_by": [
+      "risk-analysis-service",
+      "alert-notification-service",
+      "data-storage-service",
+      "dashboard-backend"
+    ],
+    "version": "1.0"
+  },
+
+  "threshold_profiles": [
+    "STANDARD",
+    "CARDIAC",
+    "ELDERLY",
+    "RESPIRATORY_RISK",
+    "HIGH_RISK"
+  ],
+
+  "alert_types": [
+    "THRESHOLD_BREACH",
+    "DEVICE_DISCONNECTED",
+    "LOW_BATTERY"
+  ],
+
+  "severities": ["normal", "warning", "critical"],
+
+  "statuses": [
+    "JUST_GENERATED",
+    "ACKNOWLEDGED",
+    "CLINICALLY_ASSESSED",
+    "CLOSED"
+  ],
+
+  "lifecycle": {
+    "initial_status": "JUST_GENERATED",
+    "allowed_transitions": {
+      "JUST_GENERATED": ["ACKNOWLEDGED"],
+      "ACKNOWLEDGED": ["CLINICALLY_ASSESSED"],
+      "CLINICALLY_ASSESSED": ["CLOSED"]
+    }
+  },
+
+  "payload_contract": {
+    "required_fields": [
+      "assignment_id",
+      "alert_type",
+      "severity",
+      "status",
+      "threshold_profile",
+      "message",
+      "generated_at"
+    ],
+    "optional_fields": [
+      "acknowledged_at",
+      "reviewed_at",
+      "reviewed_by",
+      "clinical_note"
+    ]
+  },
+
+  "example_payload": {
+    "assignment_id": 42,
+    "alert_type": "THRESHOLD_BREACH",
+    "severity": "critical",
+    "status": "JUST_GENERATED",
+    "threshold_profile": "RESPIRATORY_RISK",
+    "message": "SpO2 dropped below critical threshold",
+    "generated_at": "2025-12-29T14:38:00Z"
+  }
+}
+>>>>>>> 166f8a9b86e641d57f616c5eae54d40036eea3c6
