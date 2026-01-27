@@ -37,8 +37,4 @@ def get_vitals_history(
     - Medical-safe (patient-based)
     - Device reuse safe
     """
-<<<<<<< HEAD
     return db.get_vitals_history(patient_id, limit)
-=======
-    return db.get_vitals_history(patient_id, limit)
->>>>>>> 166f8a9b86e641d57f616c5eae54d40036eea3c6

@@ -1,8 +1,4 @@
 fastapi
 uvicorn[standard]
 paho-mqtt
-<<<<<<< HEAD
 requests
-=======
-requests
->>>>>>> 166f8a9b86e641d57f616c5eae54d40036eea3c6
