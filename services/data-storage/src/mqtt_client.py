@@ -1,5 +1,3 @@
-# services/data-storage/src/mqtt_client.py
-
 from __future__ import annotations
 
 import json
@@ -15,45 +13,51 @@ from storage.local import engine, LocalStorage
 class MQTTClient:
     """
     Data-Storage MQTT consumer:
-    - Subscribes to vitals + alerts topics
+    - Subscribes to vitals + final alerts topics
     - Validates JSON
-    - Resolves active assignment_id
-    - Persists into SQLite via LocalStorage (OOP)
+    - Resolves assignment_id (for vitals)
+    - Persists data into SQLite
     """
 
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = config or {}
         self.storage = LocalStorage()
 
-        # MQTT connection (config -> env -> default)
+        # ----------------------------
+        # MQTT connection
+        # ----------------------------
         mqtt_cfg = self.config.get("mqtt", {})
         self.broker = mqtt_cfg.get("host") or os.getenv("MQTT_HOST", "mqtt-broker")
         self.port = int(mqtt_cfg.get("port") or os.getenv("MQTT_PORT", "1883"))
         self.keepalive = int(mqtt_cfg.get("keepalive") or os.getenv("MQTT_KEEPALIVE", "60"))
 
-        # Topics (config -> env -> default)
+        # ----------------------------
+        # Topics (from Health Catalog)
+        # ----------------------------
         topics_cfg = self.config.get("topics", {})
         self.vitals_topic = (
-            topics_cfg.get("vitals", {}).get("subscribe")
-            or os.getenv("MQTT_VITALS_TOPIC", "wristbands/+/vitals")
+            topics_cfg.get("vitals", {}).get("subscribe_pattern")
+            or "wristbands/+/vitals"
         )
         self.alerts_topic = (
-            topics_cfg.get("alerts", {}).get("subscribe")
-            or os.getenv("MQTT_ALERTS_TOPIC", "health/alerts/#")
+            topics_cfg.get("alerts", {}).get("subscribe_pattern")
+            or "health/alerts"
         )
 
-        # Flags (optional)
+        # ----------------------------
+        # Feature flags
+        # ----------------------------
         flags = self.config.get("feature_flags", {})
-        self.strict_json_validation = bool(flags.get("strict_json_validation", True))
+        self.strict_json_validation = bool(flags.get("enable_strict_schema_validation", True))
 
-        self._client = mqtt.Client()
+        self._client = mqtt.Client(client_id="data-storage-service")
 
     # ----------------------------
     # Public API
     # ----------------------------
     def start(self) -> None:
         print("[MQTT] starting data-storage mqtt client")
-        print(f"[MQTT] broker={self.broker}:{self.port} keepalive={self.keepalive}")
+        print(f"[MQTT] broker={self.broker}:{self.port}")
         print(f"[MQTT] subscribe vitals={self.vitals_topic}")
         print(f"[MQTT] subscribe alerts={self.alerts_topic}")
 
@@ -70,8 +74,8 @@ class MQTTClient:
     def _on_connect(self, client, userdata, flags, rc):
         if rc == 0:
             print("[MQTT] connected ✅")
-            client.subscribe(self.vitals_topic)
-            client.subscribe(self.alerts_topic)
+            client.subscribe(self.vitals_topic, qos=0)
+            client.subscribe(self.alerts_topic, qos=1)
             print("[MQTT] subscribed ✅")
         else:
             print(f"[MQTT] connect failed rc={rc} ❌")
@@ -89,13 +93,10 @@ class MQTTClient:
         if payload is None:
             return
 
-        # Alerts: subscription might be "health/alerts/#"
-        # Incoming topic will be like "health/alerts" or "health/alerts/something"
         if topic.startswith("health/alerts"):
             self._handle_alert(payload)
             return
 
-        # Vitals: "wristbands/<id>/vitals"
         if topic.startswith("wristbands/") and topic.endswith("/vitals"):
             self._handle_vitals(payload)
             return
@@ -113,40 +114,24 @@ class MQTTClient:
             return None
 
         if self.strict_json_validation and not isinstance(obj, dict):
-            print(f"[MQTT] JSON must be an object/dict, got {type(obj)}")
+            print(f"[MQTT] JSON must be an object, got {type(obj)}")
             return None
 
         return obj
 
-    def _resolve_assignment_id(self, wristband_id: Optional[int] = None, patient_id: Optional[int] = None) -> Optional[int]:
-        if wristband_id is None and patient_id is None:
-            return None
-
+    def _resolve_assignment_id(self, wristband_id: int) -> Optional[int]:
         with engine.begin() as conn:
-            if wristband_id is not None:
-                row = conn.execute(
-                    text(
-                        """
-                        SELECT assignment_id
-                        FROM WRISTBAND_ASSIGNMENT
-                        WHERE wristband_id = :wid
-                          AND end_date IS NULL
-                        """
-                    ),
-                    {"wid": wristband_id},
-                ).fetchone()
-            else:
-                row = conn.execute(
-                    text(
-                        """
-                        SELECT assignment_id
-                        FROM WRISTBAND_ASSIGNMENT
-                        WHERE patient_id = :pid
-                          AND end_date IS NULL
-                        """
-                    ),
-                    {"pid": patient_id},
-                ).fetchone()
+            row = conn.execute(
+                text(
+                    """
+                    SELECT assignment_id
+                    FROM WRISTBAND_ASSIGNMENT
+                    WHERE wristband_id = :wid
+                      AND end_date IS NULL
+                    """
+                ),
+                {"wid": wristband_id},
+            ).fetchone()
 
         return int(row[0]) if row else None
 
@@ -159,7 +144,7 @@ class MQTTClient:
             print("[VITAL] wristband_id missing, drop message")
             return
 
-        assignment_id = self._resolve_assignment_id(wristband_id=int(wristband_id))
+        assignment_id = self._resolve_assignment_id(int(wristband_id))
         if assignment_id is None:
             print(f"[VITAL] No active assignment for wristband {wristband_id}")
             return
@@ -170,31 +155,28 @@ class MQTTClient:
     def _handle_alert(self, payload: Dict[str, Any]) -> None:
         print("[ALERT] received:", payload)
 
-        wristband_id = payload.get("wristband_id")
-        patient_id = payload.get("patient_id")
-
-        assignment_id = self._resolve_assignment_id(
-            wristband_id=int(wristband_id) if wristband_id is not None else None,
-            patient_id=int(patient_id) if patient_id is not None else None,
-        )
+        assignment_id = payload.get("assignment_id")
         if assignment_id is None:
-            print("[ALERT] No active assignment found")
+            print("[ALERT] assignment_id missing, drop alert")
             return
 
-        # Normalize minimal required fields for DB
+        # Minimal validation (schema enforced elsewhere)
         alert_data = {
-            "message": payload.get("message", "Alert received"),
-            "alert_type": payload.get("alert_type", "GENERIC"),
-            "severity": payload.get("severity", "UNKNOWN"),
-            "status": payload.get("status", "JUST_GENERATED"),
-            "threshold_profile": payload.get("threshold_profile", "STANDARD"),
-            "generated_at": payload.get("generated_at"),  # ISO string ok (LocalStorage parses)
+            "alert_type": payload.get("alert_type"),
+            "severity": payload.get("severity"),
+            "status": payload.get("status"),
+            "threshold_profile": payload.get("threshold_profile"),
+            "metric": payload.get("metric"),
+            "value": payload.get("value"),
+            "description": payload.get("description"),
+            "full_description": payload.get("full_description"),
+            "generated_at": payload.get("generated_at"),
         }
 
-        self.storage.save_alert(assignment_id=assignment_id, data=alert_data)
+        self.storage.save_alert(assignment_id=int(assignment_id), data=alert_data)
         print(f"[ALERT] stored ✅ assignment_id={assignment_id}")
 
 
-# Backward-compatible function (so main.py can still call start_mqtt())
+# Backward-compatible entry point
 def start_mqtt(config: Optional[Dict[str, Any]] = None) -> None:
     MQTTClient(config=config).start()

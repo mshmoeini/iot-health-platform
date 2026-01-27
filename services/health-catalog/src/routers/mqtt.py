@@ -5,10 +5,10 @@ from src.core.config_loader import load_config
 router = APIRouter()
 
 
-@router.get("/")
-def get_thresholds():
+@router.get("/topics")
+def get_mqtt_topics():
     try:
-        data = load_config("thresholds.json")
+        data = load_config("mqtt_topics.json")
         return {
             "status": "success",
             "data": data,

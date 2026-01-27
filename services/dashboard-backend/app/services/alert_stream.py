@@ -1,29 +1,58 @@
-# from typing import List
-# from queue import Queue
+from typing import Set, Dict, Any
+import threading
+import queue
 
 
-# class AlertEventStream:
-#     """
-#     Manages SSE subscribers for alert events.
-#     Each subscriber has its own queue.
-#     """
+class AlertEventStream:
+    """
+    In-memory fan-out stream for alert events.
 
-#     def __init__(self):
-#         self.subscribers: List[Queue] = []
+    - MQTT subscriber publishes events
+    - WebSocket/SSE clients subscribe
+    - No persistence
+    - No business logic
+    """
 
-#     def subscribe(self) -> Queue:
-#         q = Queue()
-#         self.subscribers.append(q)
-#         return q
+    def __init__(self):
+        self._subscribers: Set[queue.Queue] = set()
+        self._lock = threading.Lock()
 
-#     def unsubscribe(self, q: Queue):
-#         if q in self.subscribers:
-#             self.subscribers.remove(q)
+    # ----------------------------
+    # Subscription management
+    # ----------------------------
+    def subscribe(self) -> queue.Queue:
+        """
+        Register a new subscriber and return its queue.
+        """
+        q: queue.Queue = queue.Queue()
+        with self._lock:
+            self._subscribers.add(q)
+        return q
 
-#     def publish(self, event: dict):
-#         for q in self.subscribers:
-#             q.put(event)
+    def unsubscribe(self, q: queue.Queue) -> None:
+        """
+        Remove a subscriber queue.
+        """
+        with self._lock:
+            self._subscribers.discard(q)
+
+    # ----------------------------
+    # Publish
+    # ----------------------------
+    def publish(self, event: Dict[str, Any]) -> None:
+        """
+        Publish an event to all subscribers.
+        """
+        with self._lock:
+            subscribers = list(self._subscribers)
+
+        for q in subscribers:
+            try:
+                q.put_nowait(event)
+            except Exception:
+                # If queue is full or broken, ignore
+                pass
 
 
-# # singleton instance
-# alert_event_stream = AlertEventStream()
+# Singleton instance
+alert_event_stream = AlertEventStream()

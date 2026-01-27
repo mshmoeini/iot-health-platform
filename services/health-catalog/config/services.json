@@ -1,32 +1,56 @@
 {
+  "metadata": {
+    "description": "Service registry and discovery configuration",
+    "owner": "health-catalog",
+    "used_by": [
+      "risk-analysis-service",
+      "alert-notification-service",
+      "data-storage-service",
+      "dashboard-backend"
+    ],
+    "version": "1.0"
+  },
+
   "services": [
     {
       "name": "health-catalog",
-      "base_url": "http://localhost:8000",
+      "type": "config-service",
+      "protocols": ["REST"],
+      "base_url": "http://health-catalog:8000",
       "version": "v1"
     },
     {
-      "name": "risk-analysis",
-      "base_url": "http://localhost:8001",
+      "name": "risk-analysis-service",
+      "type": "backend-service",
+      "protocols": ["MQTT"],
+      "base_url": null,
       "version": "v1"
     },
     {
-      "name": "alert-notification",
-      "base_url": "http://localhost:8002",
+      "name": "alert-notification-service",
+      "type": "backend-service",
+      "protocols": ["MQTT"],
+      "base_url": null,
       "version": "v1"
     },
     {
-      "name": "data-storage",
-      "base_url": "http://localhost:8003",
+      "name": "data-storage-service",
+      "type": "backend-service",
+      "protocols": ["MQTT", "REST"],
+      "base_url": "http://data-storage:8003",
       "version": "v1"
     },
     {
       "name": "dashboard-backend",
-      "base_url": "http://localhost:8004",
+      "type": "orchestration-service",
+      "protocols": ["MQTT", "REST", "WebSocket"],
+      "base_url": "http://dashboard-backend:8004",
       "version": "v1"
     },
     {
       "name": "wristband-simulator",
+      "type": "edge-device",
+      "protocols": ["MQTT"],
       "base_url": null,
       "version": "v1"
     }

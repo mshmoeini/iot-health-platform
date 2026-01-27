@@ -1,6 +1,5 @@
 import sqlite3
 from typing import List, Dict, Optional
-from datetime import datetime
 
 from app.services.storage import Storage
 
@@ -9,23 +8,16 @@ class SQLiteStorage(Storage):
     """
     SQLite implementation of the Storage interface.
 
-    This class is responsible for:
+    Responsible for:
     - executing SQL queries
-    - performing necessary joins
-    - returning raw dictionaries to the service layer
-
-    پیاده‌سازی SQLite برای لایه ذخیره‌سازی.
+    - performing joins
+    - returning raw dicts to service layer
     """
 
     def __init__(self, db_path: str):
         self.db_path = db_path
 
     def _connect(self):
-        """
-        Create a SQLite connection with Row factory enabled.
-
-        ایجاد اتصال به SQLite به‌طوری که خروجی‌ها dict-like باشند.
-        """
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
@@ -36,26 +28,27 @@ class SQLiteStorage(Storage):
 
     def list_alerts(self) -> List[Dict]:
         """
-        Return all alerts enriched with patient name and device id.
-
-        خروجی شامل اطلاعات بیمار و دستگاه است
-        و مستقیماً برای UI قابل استفاده می‌باشد.
+        Return all alerts enriched with patient name and wristband id.
+        Suitable for dashboard UI.
         """
         with self._connect() as conn:
             rows = conn.execute("""
                 SELECT
                     a.alert_id,
+                    a.assignment_id,
+                    a.generated_at,
                     a.severity,
                     a.status,
                     a.alert_type,
-                    a.message,
-                    a.generated_at,
+                    a.threshold_profile,
+                    a.description,
+                    a.full_description,
+                    a.metric,
+                    a.value,
                     a.reviewed_at,
                     a.reviewed_by,
                     a.clinical_note,
-                    a.threshold_profile,
 
-                    wa.assignment_id,
                     wa.wristband_id,
                     p.name AS patient_name
 
@@ -77,9 +70,7 @@ class SQLiteStorage(Storage):
         clinical_note: Optional[str] = None,
     ) -> None:
         """
-        Mark an alert as acknowledged and store review metadata.
-
-        هشدار را acknowledge می‌کند و اطلاعات بازبینی را ذخیره می‌کند.
+        Mark an alert as acknowledged.
         """
         with self._connect() as conn:
             conn.execute("""
@@ -94,32 +85,154 @@ class SQLiteStorage(Storage):
             """, (reviewed_by, clinical_note, alert_id))
             conn.commit()
 
+    def get_patient_alerts(self, patient_id: int) -> List[Dict]:
+        """
+        Return all alerts for a specific patient
+        (including previous assignments).
+        """
+        with self._connect() as conn:
+            rows = conn.execute("""
+                SELECT
+                    a.alert_id,
+                    a.assignment_id,
+                    a.generated_at,
+                    a.severity,
+                    a.status,
+                    a.alert_type,
+                    a.threshold_profile,
+                    a.description,
+                    a.full_description,
+                    a.metric,
+                    a.value,
+
+                    wa.wristband_id
+                FROM ALERT a
+                JOIN WRISTBAND_ASSIGNMENT wa
+                    ON a.assignment_id = wa.assignment_id
+                WHERE wa.patient_id = ?
+                ORDER BY a.generated_at DESC
+            """, (patient_id,)).fetchall()
+
+            return [dict(r) for r in rows]
+
     # ==================================================
     # Patients
     # ==================================================
 
     def get_patients(self) -> List[Dict]:
         """
-        Return all patients with their active device (if any).
-
-        لیست بیماران به‌همراه دستگاه فعال فعلی (در صورت وجود).
+        Return all patients with:
+        - active wristband (if any)
+        - latest vitals (if any)
         """
         with self._connect() as conn:
             rows = conn.execute("""
                 SELECT
                     p.patient_id,
                     p.name AS patient_name,
-                    w.wristband_id
+                    p.age,
+                    p.gender,
+                    p.phone,
+
+                    wa.assignment_id,
+                    w.wristband_id,
+
+                    vm.measured_at AS last_update,
+                    vm.heart_rate,
+                    vm.spo2,
+                    vm.temperature,
+                    vm.battery_level
 
                 FROM PATIENT p
+
+                -- Active assignment (if exists)
                 LEFT JOIN WRISTBAND_ASSIGNMENT wa
-                    ON p.patient_id = wa.patient_id
-                    AND wa.end_date IS NULL
+                    ON wa.patient_id = p.patient_id
+                AND wa.end_date IS NULL
+
                 LEFT JOIN WRISTBAND w
-                    ON wa.wristband_id = w.wristband_id
+                    ON w.wristband_id = wa.wristband_id
+
+                -- Latest vitals per assignment
+                LEFT JOIN VITAL_MEASUREMENT vm
+                    ON vm.assignment_id = wa.assignment_id
+                AND vm.measured_at = (
+                    SELECT MAX(vm2.measured_at)
+                    FROM VITAL_MEASUREMENT vm2
+                    WHERE vm2.assignment_id = wa.assignment_id
+                )
+
+                ORDER BY p.name
             """).fetchall()
 
-            return [dict(r) for r in rows]
+            return [dict(r) for r in rows] 
+
+
+    # ==================================================
+    # Single Patient
+    # ==================================================
+
+    def get_patient_overview(self, patient_id: int) -> Optional[Dict]:
+        """
+        Return overview data for a single patient:
+        - basic info
+        - active assignment (if any)
+        - latest vitals
+        - latest active alert severity
+        """
+        with self._connect() as conn:
+            row = conn.execute("""
+                SELECT
+                    p.patient_id,
+                    p.name AS patient_name,
+                    p.age,
+                    p.gender,
+                    p.phone,
+
+                    wa.assignment_id,
+                    w.wristband_id,
+
+                    vm.measured_at AS last_update,
+                    vm.heart_rate,
+                    vm.spo2,
+                    vm.temperature,
+                    vm.battery_level,
+
+                    la.severity AS latest_alert_severity
+
+                FROM PATIENT p
+
+                LEFT JOIN WRISTBAND_ASSIGNMENT wa
+                    ON wa.patient_id = p.patient_id
+                AND wa.end_date IS NULL
+
+                LEFT JOIN WRISTBAND w
+                    ON w.wristband_id = wa.wristband_id
+
+                -- Latest vitals
+                LEFT JOIN VITAL_MEASUREMENT vm
+                    ON vm.assignment_id = wa.assignment_id
+                AND vm.measured_at = (
+                        SELECT MAX(v2.measured_at)
+                        FROM VITAL_MEASUREMENT v2
+                        WHERE v2.assignment_id = wa.assignment_id
+                )
+
+                -- Latest active alert
+                LEFT JOIN ALERT la
+                    ON la.assignment_id = wa.assignment_id
+                AND la.status != 'ACKNOWLEDGED'
+                AND la.generated_at = (
+                        SELECT MAX(a2.generated_at)
+                        FROM ALERT a2
+                        WHERE a2.assignment_id = wa.assignment_id
+                        AND a2.status != 'ACKNOWLEDGED'
+                )
+
+                WHERE p.patient_id = ?
+            """, (patient_id,)).fetchone()
+
+            return dict(row) if row else None
 
     # ==================================================
     # Vitals
@@ -127,11 +240,7 @@ class SQLiteStorage(Storage):
 
     def get_latest_vitals(self) -> List[Dict]:
         """
-        Return the latest vital measurement for each active assignment.
-
-        - Only assignments with end_date IS NULL
-        - One latest measurement per assignment
-        - Enriched with patient name and wristband id
+        Return latest vitals per active assignment.
         """
         with self._connect() as conn:
             rows = conn.execute("""
@@ -167,14 +276,16 @@ class SQLiteStorage(Storage):
 
     def get_vitals_history(
         self,
-        assignment_id: int,
+        patient_id: int,
         limit: int = 50
     ) -> List[Dict]:
         """
-        Return vitals history for a specific assignment.
+        Return vitals history for a patient (based on active assignment).
 
-        تاریخچه vitals برای یک assignment مشخص.
+        - patient-based (UI safe)
+        - device reuse safe
         """
+
         with self._connect() as conn:
             rows = conn.execute("""
                 SELECT
@@ -185,12 +296,16 @@ class SQLiteStorage(Storage):
                     vm.motion,
                     vm.battery_level
                 FROM VITAL_MEASUREMENT vm
-                WHERE vm.assignment_id = ?
+                JOIN WRISTBAND_ASSIGNMENT wa
+                    ON vm.assignment_id = wa.assignment_id
+                WHERE wa.patient_id = ?
+                AND wa.end_date IS NULL
                 ORDER BY vm.measured_at DESC
                 LIMIT ?
-            """, (assignment_id, limit)).fetchall()
+            """, (patient_id, limit)).fetchall()
 
-            return [dict(r) for r in rows]
+            return [dict(r) for r in rows]  
+
 
     # ==================================================
     # Battery / Device health
@@ -198,18 +313,14 @@ class SQLiteStorage(Storage):
 
     def count_low_battery_devices(self, threshold: int) -> int:
         """
-        Count active devices whose latest battery level
-        is below the given threshold.
-
-        شمارش wristbandهای فعال با باتری پایین
-        (بر اساس آخرین vitals هر assignment).
+        Count active devices with battery below threshold.
         """
         with self._connect() as conn:
             row = conn.execute("""
                 SELECT COUNT(*) AS low_battery_count
                 FROM WRISTBAND_ASSIGNMENT wa
                 JOIN VITAL_MEASUREMENT vm
-                  ON wa.assignment_id = vm.assignment_id
+                    ON wa.assignment_id = vm.assignment_id
                 WHERE wa.end_date IS NULL
                   AND vm.measured_at = (
                       SELECT MAX(vm2.measured_at)
@@ -220,236 +331,14 @@ class SQLiteStorage(Storage):
             """, (threshold,)).fetchone()
 
             return row["low_battery_count"] if row else 0
-        
-    def get_patients_overview(self):
+
+    # ==================================================
+    # Wristbands
+    # ==================================================
+
+    def list_wristbands(self) -> List[Dict]:
         """
-        Return an overview of all patients with:
-        - active device assignment (if any)
-        - latest vitals
-        - latest active alert (if any)
-
-        این متد فقط دیتای خام دیتابیس را برمی‌گرداند
-        و هیچ منطق بیزنسی (risk status و ...) ندارد.
-        """
-
-        with self._connect() as conn:
-            rows = conn.execute("""
-                SELECT
-                    p.patient_id,
-                    p.name AS patient_name,
-                    p.age,
-                    p.gender,
-                    p.phone,
-
-                    wa.assignment_id,
-                    w.wristband_id,
-
-                    vm.measured_at AS last_update,
-                    vm.heart_rate,
-                    vm.spo2,
-                    vm.temperature,
-                    vm.battery_level,
-
-                    la.severity AS latest_alert_severity
-
-                FROM PATIENT p
-
-                -- Active assignment for patient (if exists)
-                LEFT JOIN WRISTBAND_ASSIGNMENT wa
-                    ON wa.patient_id = p.patient_id
-                AND wa.end_date IS NULL
-
-                LEFT JOIN WRISTBAND w
-                    ON w.wristband_id = wa.wristband_id
-
-                -- Latest vitals per active assignment
-                LEFT JOIN VITAL_MEASUREMENT vm
-                    ON vm.assignment_id = wa.assignment_id
-                AND vm.measured_at = (
-                        SELECT MAX(v2.measured_at)
-                        FROM VITAL_MEASUREMENT v2
-                        WHERE v2.assignment_id = wa.assignment_id
-                )
-
-                -- Latest active alert per assignment
-                LEFT JOIN ALERT la
-                    ON la.assignment_id = wa.assignment_id
-                AND la.status != 'ACKNOWLEDGED'
-                AND la.generated_at = (
-                        SELECT MAX(a2.generated_at)
-                        FROM ALERT a2
-                        WHERE a2.assignment_id = wa.assignment_id
-                        AND a2.status != 'ACKNOWLEDGED'
-                )
-
-                ORDER BY p.name
-            """).fetchall()
-
-            return [dict(r) for r in rows]
-
-
-    def get_patient_overview(self, patient_id: int):
-        """
-        Return overview data for a single patient.
-        """
-        with self._connect() as conn:
-            row = conn.execute("""
-                SELECT
-                    p.patient_id,
-                    p.name AS patient_name,
-                    p.age,
-                    p.gender,
-                    p.phone,
-
-                    wa.assignment_id,
-                    w.wristband_id,
-
-                    vm.measured_at AS last_update,
-                    vm.heart_rate,
-                    vm.spo2,
-                    vm.temperature,
-                    vm.battery_level,
-
-                    la.severity AS latest_alert_severity
-
-                FROM PATIENT p
-                LEFT JOIN WRISTBAND_ASSIGNMENT wa
-                    ON wa.patient_id = p.patient_id
-                AND wa.end_date IS NULL
-                LEFT JOIN WRISTBAND w
-                    ON w.wristband_id = wa.wristband_id
-                LEFT JOIN VITAL_MEASUREMENT vm
-                    ON vm.assignment_id = wa.assignment_id
-                AND vm.measured_at = (
-                        SELECT MAX(v2.measured_at)
-                        FROM VITAL_MEASUREMENT v2
-                        WHERE v2.assignment_id = wa.assignment_id
-                )
-                LEFT JOIN ALERT la
-                    ON la.assignment_id = wa.assignment_id
-                AND la.status != 'ACKNOWLEDGED'
-                AND la.generated_at = (
-                        SELECT MAX(a2.generated_at)
-                        FROM ALERT a2
-                        WHERE a2.assignment_id = wa.assignment_id
-                        AND a2.status != 'ACKNOWLEDGED'
-                )
-                WHERE p.patient_id = ?
-            """, (patient_id,)).fetchone()
-
-            return dict(row) if row else None
-
-    def get_patient_alerts(self, patient_id: int):
-        """
-        Return all alerts related to a patient (across all assignments).
-
-        تمام هشدارهای یک بیمار (حتی assignmentهای قبلی) را برمی‌گرداند.
-        """
-        with self._connect() as conn:
-            rows = conn.execute("""
-                SELECT
-                    a.alert_id,
-                    a.assignment_id,
-                    a.generated_at,
-                    a.message,
-                    a.alert_type,
-                    a.severity,
-                    a.status,
-                    wa.wristband_id
-                FROM ALERT a
-                JOIN WRISTBAND_ASSIGNMENT wa
-                    ON a.assignment_id = wa.assignment_id
-                WHERE wa.patient_id = ?
-                ORDER BY a.generated_at DESC
-            """, (patient_id,)).fetchall()
-
-            return [dict(r) for r in rows]
-
-    def create_patient(self, data: dict):
-        """
-        Insert a new patient into PATIENT table.
-
-        داده‌های بیمار جدید را در دیتابیس ذخیره می‌کند
-        و patient_id ساخته‌شده را برمی‌گرداند.
-        """
-        with self._connect() as conn:
-            cursor = conn.execute(
-                """
-                INSERT INTO PATIENT (name, age, gender, phone, threshold_profile)
-                VALUES (?, ?, ?, ?, ?)
-                """,
-                (
-                    data["name"],
-                    data.get("age"),
-                    data.get("gender"),
-                    data.get("phone"),
-                    data["threshold_profile"],
-                ),
-            )
-            conn.commit()
-
-            return {
-                "patient_id": cursor.lastrowid,
-                "name": data["name"],
-            }
-    # ======================================================
-
-    def assign_wristband(self, patient_id: int, wristband_id: int) -> None:
-        """
-        Create a new wristband assignment for a patient.
-
-        یک دستبند را به بیمار assign می‌کند.
-        """
-        with self._connect() as conn:
-            conn.execute(
-                """
-                INSERT INTO WRISTBAND_ASSIGNMENT (
-                    patient_id,
-                    wristband_id,
-                    start_date
-                )
-                VALUES (?, ?, CURRENT_TIMESTAMP)
-                """,
-                (patient_id, wristband_id),
-            )
-            conn.commit()
-
-    def create_wristband(self, wristband_id: int) -> dict:
-        """
-        Insert a new wristband into WRISTBAND table.
-
-        - wristband_id توسط UI داده می‌شود.
-        - created_at یا توسط DB پر می‌شود (DEFAULT) یا با CURRENT_TIMESTAMP.
-        """
-        with self._connect() as conn:
-            # اگر created_at در جدول DEFAULT دارد:
-            # conn.execute("INSERT INTO WRISTBAND (wristband_id) VALUES (?)", (wristband_id,))
-
-            # نسخه سازگار (حتی اگر DEFAULT نداشته باشد):
-            conn.execute(
-                """
-                INSERT INTO WRISTBAND (wristband_id, created_at)
-                VALUES (?, CURRENT_TIMESTAMP)
-                """,
-                (wristband_id,),
-            )
-            conn.commit()
-
-            row = conn.execute(
-                "SELECT wristband_id, created_at FROM WRISTBAND WHERE wristband_id = ?",
-                (wristband_id,),
-            ).fetchone()
-
-            return dict(row) if row else {"wristband_id": wristband_id, "created_at": None}
-
-    def list_wristbands(self):
-        """
-        Return all wristbands with assigned patient name (if any).
-
-        اگر دستبند به بیماری assign شده باشد:
-            assignedTo = patient_name
-        اگر assign نشده باشد:
-            assignedTo = None
+        Return all wristbands with assigned patient (if any).
         """
         with self._connect() as conn:
             rows = conn.execute("""
@@ -470,32 +359,77 @@ class SQLiteStorage(Storage):
                 {
                     "wristband_id": r["wristband_id"],
                     "created_at": r["created_at"],
-                    "assignedTo": r["assigned_to"],  # None if not assigned
+                    "assignedTo": r["assigned_to"],
                 }
                 for r in rows
             ]
 
-
-
-    def list_available_wristbands(self):
+    def list_available_wristbands(self) -> List[Dict]:
         """
-        Return wristbands that do NOT have an active assignment.
-
-        دستبندهایی که assignment فعال ندارند.
+        Return wristbands without active assignment.
         """
         with self._connect() as conn:
-            rows = conn.execute(
-                """
+            rows = conn.execute("""
                 SELECT
                     w.wristband_id,
                     w.created_at
                 FROM WRISTBAND w
                 LEFT JOIN WRISTBAND_ASSIGNMENT wa
                     ON wa.wristband_id = w.wristband_id
-                AND wa.end_date IS NULL
+                    AND wa.end_date IS NULL
                 WHERE wa.assignment_id IS NULL
                 ORDER BY w.wristband_id
-                """
-            ).fetchall()
+            """).fetchall()
 
             return [dict(r) for r in rows]
+
+    # ==================================================
+    # Create / Assign
+    # ==================================================
+
+    def create_patient(self, data: dict) -> Dict:
+        with self._connect() as conn:
+            cursor = conn.execute("""
+                INSERT INTO PATIENT (name, age, gender, phone, threshold_profile)
+                VALUES (?, ?, ?, ?, ?)
+            """, (
+                data["name"],
+                data.get("age"),
+                data.get("gender"),
+                data.get("phone"),
+                data["threshold_profile"],
+            ))
+            conn.commit()
+
+            return {
+                "patient_id": cursor.lastrowid,
+                "name": data["name"],
+            }
+
+    def assign_wristband(self, patient_id: int, wristband_id: int) -> None:
+        with self._connect() as conn:
+            conn.execute("""
+                INSERT INTO WRISTBAND_ASSIGNMENT (
+                    patient_id,
+                    wristband_id,
+                    start_date
+                )
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+            """, (patient_id, wristband_id))
+            conn.commit()
+
+    def create_wristband(self, wristband_id: int) -> Dict:
+        with self._connect() as conn:
+            conn.execute("""
+                INSERT INTO WRISTBAND (wristband_id, created_at)
+                VALUES (?, CURRENT_TIMESTAMP)
+            """, (wristband_id,))
+            conn.commit()
+
+            row = conn.execute("""
+                SELECT wristband_id, created_at
+                FROM WRISTBAND
+                WHERE wristband_id = ?
+            """, (wristband_id,)).fetchone()
+
+            return dict(row) if row else {}

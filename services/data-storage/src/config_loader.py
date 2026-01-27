@@ -5,6 +5,9 @@ from urllib.request import urlopen
 from urllib.error import URLError, HTTPError
 
 
+# ----------------------------
+# Internal helpers
+# ----------------------------
 def _url(base: str, path: str) -> str:
     return f"{base.rstrip('/')}{path}"
 
@@ -14,12 +17,18 @@ def _get_json(url: str) -> dict:
         return json.loads(response.read().decode("utf-8"))
 
 
+# ----------------------------
+# Public API
+# ----------------------------
 def load_health_catalog_config(
     retries: int = 5,
     delay_seconds: int = 2
 ) -> dict:
+    """
+    Load configuration required by Data Storage Service
+    from Health Catalog.
+    """
     hc_base = os.getenv("HEALTH_CATALOG_URL", "http://health-catalog:8000")
-    active_env = os.getenv("ACTIVE_ENV", "docker")
 
     last_error = None
 
@@ -27,27 +36,35 @@ def load_health_catalog_config(
         try:
             print(f"[CONFIG] Loading Health Catalog (attempt {attempt}/{retries})")
 
-            endpoints = _get_json(_url(hc_base, "/endpoints"))["data"]
-            topics = _get_json(_url(hc_base, "/topics"))["data"]
-            thresholds = _get_json(_url(hc_base, "/thresholds"))["data"]
+            # Service registry (mainly for REST exposure / documentation)
+            services = _get_json(
+                _url(hc_base, "/registry/services")
+            )["data"]
 
-            # environments is OPTIONAL for now
-            try:
-                environments = _get_json(_url(hc_base, "/environments"))["data"]
-                env_cfg = environments.get(active_env, {})
-            except HTTPError as e:
-                if e.code == 404:
-                    print("[CONFIG] /environments not found, using empty env_config")
-                    env_cfg = {}
-                else:
-                    raise
+            # MQTT topics contract
+            topics = _get_json(
+                _url(hc_base, "/config/mqtt/topics")
+            )["data"]
+
+            # Alert contract (schema + lifecycle)
+            alerts = _get_json(
+                _url(hc_base, "/config/alerts")
+            )["data"]
+
+            # Environments (MQTT host/port resolution)
+            environments = _get_json(
+                _url(hc_base, "/config/environments")
+            )["data"]
+
+            active_env = environments["active_environment"]
+            env_cfg = environments["environments"].get(active_env, {})
 
             config = {
                 "environment": active_env,
-                "services": endpoints,
-                "env_config": env_cfg,
+                "mqtt": env_cfg.get("mqtt", {}),
                 "topics": topics,
-                "thresholds": thresholds
+                "alerts": alerts,
+                "services": services
             }
 
             print("[CONFIG] Health Catalog loaded successfully")

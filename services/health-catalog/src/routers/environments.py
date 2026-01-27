@@ -6,9 +6,9 @@ router = APIRouter()
 
 
 @router.get("/")
-def get_thresholds():
+def get_environments():
     try:
-        data = load_config("thresholds.json")
+        data = load_config("environments.json")
         return {
             "status": "success",
             "data": data,
