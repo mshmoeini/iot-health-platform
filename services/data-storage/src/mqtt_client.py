@@ -4,8 +4,8 @@ import json
 import os
 from typing import Any, Dict, Optional
 
-import paho.mqtt.client as mqtt
-from sqlalchemy import text
+import paho.mqtt.client as mqtt # type: ignore
+from sqlalchemy import text # type: ignore
 
 from storage.local import engine, LocalStorage
 

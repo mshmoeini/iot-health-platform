@@ -17,5 +17,4 @@ app.include_router(thresholds_router, prefix="/config/thresholds", tags=["Thresh
 app.include_router(mqtt_router, prefix="/config/mqtt", tags=["MQTT"])
 app.include_router(services_router, prefix="/registry/services", tags=["Services"])
 app.include_router(alerts_router, prefix="/config/alerts", tags=["Alerts"])
-app.include_router(features_router, prefix="/config/features", tags=["Feature Flags"])
 app.include_router(environments_router, prefix="/config/environments", tags=["Environments"])

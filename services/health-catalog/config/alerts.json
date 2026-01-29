@@ -50,7 +50,10 @@
       "severity",
       "status",
       "threshold_profile",
-      "message",
+      "description",
+      "full_description",
+      "metric",
+      "value",
       "generated_at"
     ],
     "optional_fields": [
@@ -59,15 +62,5 @@
       "reviewed_by",
       "clinical_note"
     ]
-  },
-
-  "example_payload": {
-    "assignment_id": 42,
-    "alert_type": "THRESHOLD_BREACH",
-    "severity": "critical",
-    "status": "JUST_GENERATED",
-    "threshold_profile": "RESPIRATORY_RISK",
-    "message": "SpO2 dropped below critical threshold",
-    "generated_at": "2025-12-29T14:38:00Z"
   }
 }

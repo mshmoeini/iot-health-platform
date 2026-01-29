@@ -26,7 +26,14 @@ class Patient(Base):
 
     patient_id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
-
+    age = Column(Integer, nullable=False)
+    gender = Column(
+        String(10),
+        CheckConstraint("gender IN ('MALE','FEMALE')"),
+        nullable=False,
+    )
+    phone = Column(String(15))
+    
     threshold_profile = Column(
         String(30),
         CheckConstraint(
