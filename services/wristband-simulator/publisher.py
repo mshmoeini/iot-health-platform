@@ -72,7 +72,7 @@ def generate_value(vital):
 
 def fetch_active_assignments():
     try:
-        resp = requests.get(f"{DATA_STORAGE_URL}/assignments/active", timeout=5)
+        resp = requests.get(f"{DATA_STORAGE_URL}/api/v1/assignments/active", timeout=5)
         resp.raise_for_status()
         return resp.json()
     except Exception as e:

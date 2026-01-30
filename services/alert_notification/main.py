@@ -2,6 +2,7 @@ import json
 import requests
 import paho.mqtt.client as mqtt
 from datetime import datetime
+import time
 
 # ----------------------------------
 # Health Catalog endpoints
@@ -24,10 +25,34 @@ ENV_CONFIG = {}
 # ----------------------------------
 # Helpers
 # ----------------------------------
-def load_from_catalog(endpoint: str) -> dict:
-    response = requests.get(f"{HEALTH_CATALOG_URL}{endpoint}")
-    response.raise_for_status()
-    return response.json()["data"]
+def load_from_catalog(endpoint: str, retries: int = 5, delay: float = 2.0) -> dict:
+    last_error = None
+
+    for attempt in range(1, retries + 1):
+        try:
+            print(
+                f"[ALERT][CONFIG] Loading {endpoint} "
+                f"(attempt {attempt}/{retries})"
+            )
+
+            response = requests.get(
+                f"{HEALTH_CATALOG_URL}{endpoint}",
+                timeout=5
+            )
+            response.raise_for_status()
+            return response.json()["data"]
+
+        except Exception as e:
+            last_error = e
+            print(
+                f"[ALERT][WARN] Health Catalog not ready "
+                f"for {endpoint}: {e}"
+            )
+            time.sleep(delay)
+
+    raise RuntimeError(
+        f"Failed to load {endpoint} after {retries} attempts: {last_error}"
+    )
 
 
 def build_descriptions(event: dict):
@@ -110,8 +135,11 @@ def main():
 
     # Load configs from Health Catalog
     MQTT_TOPICS = load_from_catalog(MQTT_TOPICS_ENDPOINT)
+    print(f"[ALERT] MQTT Topics loaded")
     ALERT_CONFIG = load_from_catalog(ALERTS_ENDPOINT)
+    print(f"[ALERT] Alert Config loaded")
     ENV_CONFIG = load_from_catalog(ENVIRONMENTS_ENDPOINT)
+    print(f"[ALERT] Environment Config loaded")
 
     # Resolve active environment
     active_env = ENV_CONFIG["active_environment"]
