@@ -124,6 +124,7 @@ class SQLiteStorage(Storage):
         Return all patients with:
         - active wristband (if any)
         - latest vitals (if any)
+        - latest active alert severity (if any)
         """
         with self._connect() as conn:
             rows = conn.execute("""
@@ -141,7 +142,9 @@ class SQLiteStorage(Storage):
                     vm.heart_rate,
                     vm.spo2,
                     vm.temperature,
-                    vm.battery_level
+                    vm.battery_level,
+
+                    la.severity AS latest_alert_severity
 
                 FROM PATIENT p
 
@@ -162,10 +165,22 @@ class SQLiteStorage(Storage):
                     WHERE vm2.assignment_id = wa.assignment_id
                 )
 
+                -- Latest active alert per assignment
+                LEFT JOIN ALERT la
+                    ON la.assignment_id = wa.assignment_id
+                AND la.status != 'ACKNOWLEDGED'
+                AND la.generated_at = (
+                    SELECT MAX(a2.generated_at)
+                    FROM ALERT a2
+                    WHERE a2.assignment_id = wa.assignment_id
+                        AND a2.status != 'ACKNOWLEDGED'
+                )
+
                 ORDER BY p.name
             """).fetchall()
 
-            return [dict(r) for r in rows] 
+            return [dict(r) for r in rows]  
+
 
 
     # ==================================================
