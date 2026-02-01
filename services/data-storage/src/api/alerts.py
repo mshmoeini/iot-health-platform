@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Query
+from typing import Optional
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from storage.local import SessionLocal
+from storage.local import LocalStorage, SessionLocal
 from models import Alert
-
+from api.schemas import AlertAckRequest
 router = APIRouter(prefix="/alerts", tags=["alerts"])
-
+storage = LocalStorage()
 
 @router.get("/history")
 def get_alerts_history(
@@ -41,3 +42,29 @@ def get_alerts_history(
         ]
     finally:
         session.close()
+
+@router.get("/")
+def list_alerts():
+    items = storage.list_alerts()
+    return {"items": items}
+
+@router.post(
+    "/{alert_id}/acknowledge",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Acknowledge an alert",
+)
+def acknowledge_alert(
+    alert_id: int,
+    payload: Optional[AlertAckRequest] = None,
+):
+    reviewed_by = payload.reviewed_by if payload else None
+    clinical_note = payload.clinical_note if payload else None
+
+    updated = storage.acknowledge_alert(
+        alert_id=alert_id,
+        reviewed_by=reviewed_by,
+        clinical_note=clinical_note,
+    )
+
+    if not updated:
+        raise HTTPException(status_code=404, detail="Alert not found")

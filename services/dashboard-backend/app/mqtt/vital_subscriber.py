@@ -25,7 +25,7 @@ class VitalMQTTSubscriber:
 
         self._client = mqtt.Client(client_id="dashboard-backend-vitals")
 
-        # 🔑 event loop اصلی FastAPI
+        #  event loop اصلی FastAPI
         self.loop = asyncio.get_event_loop()
 
     # ----------------------------------
@@ -75,7 +75,7 @@ class VitalMQTTSubscriber:
             "data": payload
         }
 
-        # ✅ thread-safe async publish
+        #  thread-safe async publish
         asyncio.run_coroutine_threadsafe(
             patient_vital_stream.publish(patient_id, event),
             self.loop

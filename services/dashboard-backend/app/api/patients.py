@@ -59,7 +59,13 @@ def create_patient_api(
     payload: PatientCreateRequest,
     db: Storage = Depends(get_storage),
 ):
+    """
+    Create patient (and optional wristband assignment).
+    Assignment is handled inside Data Storage Service.
+    """
     return create_patient(db, payload.dict())
+
+
 
 
 

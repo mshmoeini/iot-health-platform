@@ -140,20 +140,12 @@ def get_patient_alerts(storage: Storage, patient_id: int) -> Dict:
 
 def create_patient(storage: Storage, payload: dict) -> dict:
     """
-    Create patient and optionally assign a wristband.
+    Create patient (and optional wristband assignment).
+
+    Assignment is handled inside Data Storage Service.
     """
-    wristband_id = payload.pop("wristband_id", None)
+    return storage.create_patient(payload)
 
-    patient = storage.create_patient(payload)
-    patient_id = patient["patient_id"]
-
-    if wristband_id is not None:
-        storage.assign_wristband(
-            patient_id=patient_id,
-            wristband_id=wristband_id,
-        )
-
-    return patient
 
 
 def get_patient_detail(storage: Storage, patient_id: int) -> dict:

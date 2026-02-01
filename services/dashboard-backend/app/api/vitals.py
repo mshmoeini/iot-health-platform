@@ -1,7 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.services.container import get_storage
 from app.services.storage import Storage
+from app.services.vitals_service import (
+    get_latest_vitals_ui,
+    get_vitals_history_ui,
+)
 
 router = APIRouter()
 
@@ -9,32 +13,24 @@ router = APIRouter()
 @router.get(
     "/latest",
     summary="Get latest vitals for all active patients",
-    description="Return the latest vital measurements for each active assignment.",
 )
-def get_latest_vitals(db: Storage = Depends(get_storage)):
-    """
-    Get latest vitals for all active assignments.
-
-    - Assignment-centric
-    - Used mainly for dashboards or monitoring views
-    """
-    return db.get_latest_vitals()
+def get_latest_vitals(
+    db: Storage = Depends(get_storage),
+):
+    return get_latest_vitals_ui(db)
 
 
 @router.get(
     "/{patient_id}/history",
     summary="Get vitals history for a patient",
-    description="Return historical vital measurements for a specific patient.",
 )
 def get_vitals_history(
     patient_id: int,
-    limit: int = 50,
+    limit: int = Query(50, ge=1, le=500),
     db: Storage = Depends(get_storage),
 ):
-    """
-    Get vitals history for a specific patient.
-
-    - Medical-safe (patient-based)
-    - Device reuse safe
-    """
-    return db.get_vitals_history(patient_id, limit)
+    return get_vitals_history_ui(
+        storage=db,
+        patient_id=patient_id,
+        limit=limit,
+    )
