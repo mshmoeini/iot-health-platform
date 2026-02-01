@@ -13,32 +13,6 @@ RISK_CRITICAL = "CRITICAL"
 
 
 # --------------------------------------------------
-# Helper functions
-# --------------------------------------------------
-
-def _map_wristband_to_device_id(wristband_id: Optional[int]) -> Optional[str]:
-    """
-    Convert internal wristband_id to UI-friendly device_id.
-    """
-    if wristband_id is None:
-        return None
-    return f"WB-{wristband_id}"
-
-
-def _compute_risk_status(latest_alert_severity: Optional[str]) -> str:
-    """
-    Compute patient risk status based on latest active alert severity.
-    """
-    if latest_alert_severity == RISK_CRITICAL:
-        return RISK_CRITICAL
-
-    if latest_alert_severity == RISK_WARNING:
-        return RISK_WARNING
-
-    return RISK_NORMAL
-
-
-# --------------------------------------------------
 # Patients overview
 # --------------------------------------------------
 
@@ -183,3 +157,31 @@ def get_patient_detail(storage: Storage, patient_id: int) -> dict:
         "has_active_alert": latest_alert_severity is not None,
         "last_update": row.get("last_update"),
     }
+
+
+
+# --------------------------------------------------
+# Helper functions
+# --------------------------------------------------
+
+def _map_wristband_to_device_id(wristband_id: Optional[int]) -> Optional[str]:
+    """
+    Convert internal wristband_id to UI-friendly device_id.
+    """
+    if wristband_id is None:
+        return None
+    return f"WB-{wristband_id}"
+
+
+def _compute_risk_status(latest_alert_severity: Optional[str]) -> str:
+    """
+    Compute patient risk status based on latest active alert severity.
+    """
+    if latest_alert_severity == RISK_CRITICAL:
+        return RISK_CRITICAL
+
+    if latest_alert_severity == RISK_WARNING:
+        return RISK_WARNING
+
+    return RISK_NORMAL
+

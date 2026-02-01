@@ -6,7 +6,7 @@ from app.services.storage import Storage
 from app.services.patients_service import get_patients_overview
 from fastapi import HTTPException
 from app.services.patients_service import get_patient_detail
-
+from app.services.patients_service import get_patient_alerts
 router = APIRouter()
 
 
@@ -31,10 +31,6 @@ def get_patients(db: Storage = Depends(get_storage)):
     return get_patients_overview(db)
 
 
-
-from app.services.patients_service import get_patient_alerts
-
-
 @router.get(
     "/{patient_id}/alerts",
     summary="Get alerts for a patient",
@@ -46,7 +42,6 @@ def patient_alerts(
     db: Storage = Depends(get_storage),
 ):
     return get_patient_alerts(db, patient_id)
-
 
 
 @router.post(
@@ -64,9 +59,6 @@ def create_patient_api(
     Assignment is handled inside Data Storage Service.
     """
     return create_patient(db, payload.dict())
-
-
-
 
 
 @router.get(

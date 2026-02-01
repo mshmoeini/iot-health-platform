@@ -15,10 +15,6 @@ class PatientOut(BaseModel):
     This schema is UI-oriented and may include enriched fields
     (e.g., active device_id), even if they are not directly stored
     in the patient table.
-
-    داده‌های بیمار برای UI.
-    این اسکیما لزوماً معادل جدول دیتابیس نیست و می‌تواند
-    اطلاعات enrich شده (مثل device_id) داشته باشد.
     """
     patient_id: int
     patient_name: str
@@ -149,8 +145,6 @@ class RecentAlertSchema(BaseModel):
 class DashboardOverviewResponse(BaseModel):
     """
     Final response schema for /dashboard/overview endpoint.
-
-    خروجی نهایی endpoint داشبورد
     """
     system_overview: SystemOverviewSchema
     stats: DashboardStatsSchema

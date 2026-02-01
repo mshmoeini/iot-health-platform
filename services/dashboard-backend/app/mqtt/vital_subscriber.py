@@ -29,6 +29,8 @@ class VitalMQTTSubscriber:
         self.loop = asyncio.get_event_loop()
 
     # ----------------------------------
+    # MQTT callbacks
+    # ----------------------------------
     def _on_connect(self, client, userdata, flags, rc):
         if rc == 0:
             print("[VITAL-MQTT] connected to broker ✅")
@@ -36,9 +38,6 @@ class VitalMQTTSubscriber:
             print(f"[VITAL-MQTT] subscribed to {self.vitals_topic}")
         else:
             print(f"[VITAL-MQTT] connection failed rc={rc} ❌")
-
-
-
 
     def _on_message(self, client, userdata, msg):
         print(f"[VITAL-MQTT] message received on {msg.topic}")
@@ -81,6 +80,8 @@ class VitalMQTTSubscriber:
             self.loop
         )
 
+    # ----------------------------------
+    # Runner
     # ----------------------------------
     def start(self):
         self._client.on_connect = self._on_connect

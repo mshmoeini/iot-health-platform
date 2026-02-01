@@ -86,9 +86,15 @@ class RESTStorageClient(Storage):
     def acknowledge_alert(
         self,
         alert_id: int,
-        reviewed_by: str | None = None,
-        clinical_note: str | None = None,
+        reviewed_by: Optional[str] = None,
+        clinical_note: Optional[str] = None,
     ) -> None:
+        Dr = "Dr. Moeini"
+        note = "Reviewed and acknowledged."
+        if reviewed_by is None:
+            reviewed_by = Dr
+        if clinical_note is None:
+            clinical_note = note
         resp = requests.post(
             f"{DATA_STORAGE_BASE_URL}/alerts/{alert_id}/acknowledge",
             json={
@@ -113,7 +119,7 @@ class RESTStorageClient(Storage):
     # ----------------------------
     # wristbands
     # ----------------------------     
-    def get_wristbands(self):
+    def list_wristbands(self):
         resp = requests.get(f"{DATA_STORAGE_BASE_URL}/wristbands", timeout=5)
         resp.raise_for_status()
         return resp.json()["items"]
@@ -135,8 +141,6 @@ class RESTStorageClient(Storage):
         resp.raise_for_status()
         return resp.json()
 
-
-
     def unassign_wristband(self, wristband_id: int) -> None:
         resp = requests.post(
             f"{DATA_STORAGE_BASE_URL}/{wristband_id}/unassign",
@@ -154,8 +158,6 @@ class RESTStorageClient(Storage):
     def count_low_battery_devices(self, threshold: int) -> int:
         raise NotImplementedError
 
-    def acknowledge_alert(self, alert_id: int, reviewed_by=None, clinical_note=None):
-        raise NotImplementedError
 
     def assign_wristband(self, patient_id: int, wristband_id: int) -> None:
         raise NotImplementedError

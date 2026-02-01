@@ -99,14 +99,14 @@ class Storage(ABC):
         """
         raise NotImplementedError
     
-
-
+    @abstractmethod
     def create_patient(self, data: dict) -> dict:
         """
         Create a new patient and return the created record.
         """
         raise NotImplementedError
-
+    
+    @abstractmethod
     def assign_wristband(
         self,
         patient_id: int,
@@ -117,26 +117,28 @@ class Storage(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
     def create_wristband(self, wristband_id: int) -> Dict:
         """
         Create a new wristband in DB.
         """
         raise NotImplementedError
 
+    @abstractmethod
     def get_patient_overview(self, patient_id: int) -> dict | None:
         """
         Return overview data for a single patient.
         """
         raise NotImplementedError
 
-
+    @abstractmethod
     def list_wristbands(self) -> list[dict]:
         """
         Return all wristbands.
         """
         raise NotImplementedError
 
-
+    @abstractmethod
     def list_available_wristbands(self) -> list[dict]:
         """
         Return wristbands without an active assignment.
