@@ -2,44 +2,52 @@ from typing import List, Dict
 from app.services.storage import Storage
 
 
-def get_latest_vitals_ui(storage: Storage) -> Dict:
+def get_latest_vitals_ui(storage: Storage) -> List[Dict]:
     """
-    Return latest vitals for all active patients (UI-ready).
+    Return latest vitals for all active patients (UI contract).
     """
-    rows = storage.get_latest_vitals()
+
+    rows = storage.get_latest_vitals()   # ← این الان لیسته
 
     items: List[Dict] = []
 
     for row in rows:
         items.append({
-            "patient_id": row["patient_id"],
-            "patient_name": row.get("patient_name"),
-            "device_id": f"WB-{row['wristband_id']}",
+            "assignment_id": row["assignment_id"],
             "measured_at": row["measured_at"],
-
-            "vitals": {
-                "heart_rate": row.get("heart_rate"),
-                "spo2": row.get("spo2"),
-                "temperature": row.get("temperature"),
-                "motion": row.get("motion"),
-                "battery_level": row.get("battery_level"),
-            }
+            "heart_rate": row.get("heart_rate"),
+            "spo2": row.get("spo2"),
+            "temperature": row.get("temperature"),
+            "motion": row.get("motion"),
+            "battery_level": row.get("battery_level"),
+            "wristband_id": row["wristband_id"],
+            "patient_name": row.get("patient_name"),
         })
 
-    return {"items": items}
+    return items
 
 
 def get_vitals_history_ui(
     storage: Storage,
     patient_id: int,
     limit: int = 50,
-) -> Dict:
+) -> List[Dict]:
     """
-    Return vitals history for a patient.
+    Return vitals history for a patient (UI-ready).
     """
+
     rows = storage.get_vitals_history(patient_id, limit)
 
-    return {
-        "patient_id": patient_id,
-        "items": rows,
-    }
+    items: List[Dict] = []
+
+    for row in rows:
+        items.append({
+            "measured_at": row["measured_at"],
+            "heart_rate": row.get("heart_rate"),
+            "spo2": row.get("spo2"),
+            "temperature": row.get("temperature"),
+            "motion": row.get("motion"),
+            "battery_level": row.get("battery_level"),
+        })
+
+    return items

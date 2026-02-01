@@ -57,7 +57,7 @@ class RESTStorageClient(Storage):
     def get_latest_vitals(self) -> list[dict]:
         resp = requests.get(
             f"{DATA_STORAGE_BASE_URL}/vitals/latest",
-            timeout=5
+            timeout=10
         )
         resp.raise_for_status()
         return resp.json()["items"]
