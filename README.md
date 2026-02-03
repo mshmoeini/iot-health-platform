@@ -28,9 +28,9 @@ flowchart LR
     DS[Data Storage Service]
     RA[Risk Analysis Service]
     AL[Alert Notification Service]
-    BR [Broker]
+    BR[Broker]
     WRS[Wristband Simulator]
-    DB [Data Base]
+    DB[Data Base]
 
     UI -->|REST & WS| DBE
     DBE -->|REST| DS
