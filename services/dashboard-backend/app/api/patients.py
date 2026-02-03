@@ -6,7 +6,7 @@ from app.services.storage import Storage
 from app.services.patients_service import get_patients_overview
 from fastapi import HTTPException
 from app.services.patients_service import get_patient_detail
-
+from app.services.patients_service import get_patient_alerts
 router = APIRouter()
 
 
@@ -21,18 +21,8 @@ router = APIRouter()
 def get_patients(db: Storage = Depends(get_storage)):
     """
     Get patients overview for Patients page.
-
-    این endpoint:
-    - لیست همه بیماران را برمی‌گرداند
-    - device فعال (در صورت وجود) را اضافه می‌کند
-    - آخرین vitals را برمی‌گرداند
-    - risk_status را فقط بر اساس آخرین alert فعال محاسبه می‌کند
     """
     return get_patients_overview(db)
-
-
-
-from app.services.patients_service import get_patient_alerts
 
 
 @router.get(
@@ -48,7 +38,6 @@ def patient_alerts(
     return get_patient_alerts(db, patient_id)
 
 
-
 @router.post(
     "/",
     response_model=PatientCreateResponse,
@@ -59,8 +48,11 @@ def create_patient_api(
     payload: PatientCreateRequest,
     db: Storage = Depends(get_storage),
 ):
+    """
+    Create patient (and optional wristband assignment).
+    Assignment is handled inside Data Storage Service.
+    """
     return create_patient(db, payload.dict())
-
 
 
 @router.get(

@@ -13,32 +13,6 @@ RISK_CRITICAL = "CRITICAL"
 
 
 # --------------------------------------------------
-# Helper functions
-# --------------------------------------------------
-
-def _map_wristband_to_device_id(wristband_id: Optional[int]) -> Optional[str]:
-    """
-    Convert internal wristband_id to UI-friendly device_id.
-    """
-    if wristband_id is None:
-        return None
-    return f"WB-{wristband_id}"
-
-
-def _compute_risk_status(latest_alert_severity: Optional[str]) -> str:
-    """
-    Compute patient risk status based on latest active alert severity.
-    """
-    if latest_alert_severity == RISK_CRITICAL:
-        return RISK_CRITICAL
-
-    if latest_alert_severity == RISK_WARNING:
-        return RISK_WARNING
-
-    return RISK_NORMAL
-
-
-# --------------------------------------------------
 # Patients overview
 # --------------------------------------------------
 
@@ -47,7 +21,6 @@ def get_patients_overview(storage: Storage) -> Dict:
     Build UI-ready patients list for Patients page.
     """
 
-    # ✅ FIX: storage layer فقط دیتای خام می‌دهد
     rows = storage.get_patients()
 
     items: List[Dict] = []
@@ -140,20 +113,12 @@ def get_patient_alerts(storage: Storage, patient_id: int) -> Dict:
 
 def create_patient(storage: Storage, payload: dict) -> dict:
     """
-    Create patient and optionally assign a wristband.
+    Create patient (and optional wristband assignment).
+
+    Assignment is handled inside Data Storage Service.
     """
-    wristband_id = payload.pop("wristband_id", None)
+    return storage.create_patient(payload)
 
-    patient = storage.create_patient(payload)
-    patient_id = patient["patient_id"]
-
-    if wristband_id is not None:
-        storage.assign_wristband(
-            patient_id=patient_id,
-            wristband_id=wristband_id,
-        )
-
-    return patient
 
 
 def get_patient_detail(storage: Storage, patient_id: int) -> dict:
@@ -191,3 +156,31 @@ def get_patient_detail(storage: Storage, patient_id: int) -> dict:
         "has_active_alert": latest_alert_severity is not None,
         "last_update": row.get("last_update"),
     }
+
+
+
+# --------------------------------------------------
+# Helper functions
+# --------------------------------------------------
+
+def _map_wristband_to_device_id(wristband_id: Optional[int]) -> Optional[str]:
+    """
+    Convert internal wristband_id to UI-friendly device_id.
+    """
+    if wristband_id is None:
+        return None
+    return f"WB-{wristband_id}"
+
+
+def _compute_risk_status(latest_alert_severity: Optional[str]) -> str:
+    """
+    Compute patient risk status based on latest active alert severity.
+    """
+    if latest_alert_severity == RISK_CRITICAL:
+        return RISK_CRITICAL
+
+    if latest_alert_severity == RISK_WARNING:
+        return RISK_WARNING
+
+    return RISK_NORMAL
+

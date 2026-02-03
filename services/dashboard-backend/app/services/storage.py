@@ -12,15 +12,13 @@ class Storage(ABC):
     Joins required to ensure medical correctness (assignment context)
     MUST be handled here or in the concrete storage implementation.
 
-    این اینترفیس قرارداد رسمی بین service layer و دیتابیس است.
-    تمام داده‌ها باید در context صحیح assignment برگردانده شوند.
     """
 
     # ==================================================
     # Alerts
     # ==================================================
 
-    @abstractmethod
+    
     def list_alerts(self) -> List[Dict]:
         """
         Return all alerts enriched with:
@@ -28,11 +26,10 @@ class Storage(ABC):
         - wristband id (device)
         - assignment context
 
-        خروجی باید شامل اطلاعات بیمار و دستگاه باشد.
         """
         pass
 
-    @abstractmethod
+    
     def acknowledge_alert(
         self,
         alert_id: int,
@@ -42,8 +39,6 @@ class Storage(ABC):
         """
         Acknowledge an alert and update its status and review metadata.
 
-        وضعیت هشدار را به ACKNOWLEDGED تغییر می‌دهد
-        و اطلاعات بازبینی را ذخیره می‌کند.
         """
         pass
 
@@ -51,12 +46,11 @@ class Storage(ABC):
     # Patients
     # ==================================================
 
-    @abstractmethod
+    
     def get_patients(self) -> List[Dict]:
         """
         Return all patients with their active device assignment (if any).
 
-        هر بیمار به‌همراه دستگاه فعال فعلی (در صورت وجود).
         """
         pass
 
@@ -73,7 +67,6 @@ class Storage(ABC):
         - One latest measurement per assignment
         - Enriched with patient name and wristband id
 
-        آخرین vitals هر بیمار فعال.
         """
         pass
 
@@ -87,8 +80,7 @@ class Storage(ABC):
         Return vitals history for a specific patient.
         This guarantees that vitals belong to the same patient-device
         relationship over time.
-
-        تاریخچه vitals برای یک assignment مشخص (امن از نظر پزشکی).
+        limit: maximum number of records to return (default: 50)
         """
         pass
 
@@ -98,7 +90,6 @@ class Storage(ABC):
         Count active assignments whose latest battery level
         is below the given threshold.
 
-        تعداد دستگاه‌های فعال با باتری کمتر از threshold.
         """
         pass
 
@@ -108,14 +99,14 @@ class Storage(ABC):
         """
         raise NotImplementedError
     
-
-
+    
     def create_patient(self, data: dict) -> dict:
         """
         Create a new patient and return the created record.
         """
         raise NotImplementedError
-
+    
+    
     def assign_wristband(
         self,
         patient_id: int,
@@ -126,28 +117,29 @@ class Storage(ABC):
         """
         raise NotImplementedError
 
+    
     def create_wristband(self, wristband_id: int) -> Dict:
         """
         Create a new wristband in DB.
-        ساخت یک دستبند جدید در دیتابیس
         """
         raise NotImplementedError
 
+    
     def get_patient_overview(self, patient_id: int) -> dict | None:
         """
         Return overview data for a single patient.
         """
         raise NotImplementedError
 
-
+    
     def list_wristbands(self) -> list[dict]:
         """
         Return all wristbands.
         """
         raise NotImplementedError
 
-
-    def list_available_wristbands(self) -> list[dict]:
+    
+    # def list_available_wristbands(self) -> list[dict]:
         """
         Return wristbands without an active assignment.
         """

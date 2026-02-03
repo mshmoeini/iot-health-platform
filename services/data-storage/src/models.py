@@ -18,7 +18,11 @@ class Wristband(Base):
     __tablename__ = "WRISTBAND"
 
     wristband_id = Column(Integer, primary_key=True)
-    production_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow
+    )
 
 
 class Patient(Base):

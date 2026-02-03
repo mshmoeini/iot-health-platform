@@ -24,15 +24,15 @@
       "services": {
         "health-catalog": {
           "host": "localhost",
-          "port": 8000
+          "port": 8001
         },
         "risk-analysis-service": {
           "host": "localhost",
-          "port": 8001
+          "port": null
         },
         "alert-notification-service": {
           "host": "localhost",
-          "port": 8002
+          "port": null
         },
         "data-storage-service": {
           "host": "localhost",
@@ -40,7 +40,7 @@
         },
         "dashboard-backend": {
           "host": "localhost",
-          "port": 8004
+          "port": 8000
         }
       }
     },
@@ -54,15 +54,15 @@
       "services": {
         "health-catalog": {
           "host": "health-catalog",
-          "port": 8000
+          "port": 8001
         },
         "risk-analysis-service": {
           "host": "risk-analysis",
-          "port": 8001
+          "port": null
         },
         "alert-notification-service": {
           "host": "alert-notification",
-          "port": 8002
+          "port": null
         },
         "data-storage-service": {
           "host": "data-storage",
@@ -70,7 +70,7 @@
         },
         "dashboard-backend": {
           "host": "dashboard-backend",
-          "port": 8004
+          "port": 8000
         }
       }
     }

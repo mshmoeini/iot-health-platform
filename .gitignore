@@ -6,9 +6,15 @@ __pycache__/
 # C extensions
 *.so
 #Data files
+<<<<<<< HEAD
 data/*.db 
 data/*.sqlite3
 health.db
+=======
+*.dat
+*.data
+*.db
+>>>>>>> Rest_based_dashboard_backend
 # Distribution / packaging
 .Python
 build/

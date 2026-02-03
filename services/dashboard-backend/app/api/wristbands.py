@@ -6,8 +6,9 @@ from app.services.container import get_storage
 from app.services.storage import Storage
 from app.services.wristbands_service import (
     list_wristbands,
-    list_available_wristbands,
+    
     create_wristband,
+    unassign_wristband,
 )
 router = APIRouter()
 
@@ -38,9 +39,6 @@ def create_wristband_api(
             detail="Wristband ID already exists.",
         )
 
-
-
-
 @router.get(
     "/",
     summary="Get all wristbands",
@@ -50,10 +48,26 @@ def get_wristbands(db: Storage = Depends(get_storage)):
     return list_wristbands(db)
 
 
-@router.get(
-    "/available",
-    summary="Get available wristbands",
-    description="Return wristbands that are not currently assigned to any patient.",
-)
-def get_available_wristbands(db: Storage = Depends(get_storage)):
-    return list_available_wristbands(db)
+# @router.get(
+#     "/available",
+#     summary="Get available wristbands",
+#     description="Return wristbands that are not currently assigned to any patient.",
+# )
+# def get_available_wristbands(db: Storage = Depends(get_storage)):
+#     return list_available_wristbands(db)
+
+
+
+@router.post("/{wristband_id}/unassign")
+def unassign_wristband_api(
+    wristband_id: int,
+    db: Storage = Depends(get_storage),
+):
+    try:
+        unassign_wristband(db, wristband_id)
+        return {"status": "ok"}
+    except ValueError:
+        raise HTTPException(
+            status_code=404,
+            detail="Wristband is not assigned"
+        )

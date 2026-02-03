@@ -4,7 +4,6 @@ from .routers.thresholds import router as thresholds_router
 from .routers.mqtt import router as mqtt_router
 from .routers.services import router as services_router
 from .routers.alerts import router as alerts_router
-from .routers.features import router as features_router
 from .routers.environments import router as environments_router
 
 app = FastAPI(
