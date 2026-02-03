@@ -1,4 +1,3 @@
-# iot-health-platform
 IoT Platform for Smart Health Monitoring (Course Project)
 #  IoT Health Monitoring Platform
 
