@@ -3,6 +3,8 @@
 Health Catalog is the **central configuration hub** of the IoT Health Platform.
 All other services must load their runtime configuration from this service (Phase 2 policy: **no hardcoding**).
 
+
+
 ## What Health Catalog Provides
 
 Health Catalog stores and serves **mostly static** configuration:
@@ -18,7 +20,7 @@ Health Catalog stores and serves **mostly static** configuration:
 > - **DB = operational data & real system state**
 > - Wristband → Patient mapping is **dynamic** and must come from DB (`WRISTBAND_ASSIGNMENT`).
 
----
+--------
 
 ## Project Structure
 
