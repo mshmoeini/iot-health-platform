@@ -48,4 +48,141 @@ flowchart LR
     BR -->|MQTT| DBE
     BR -->|MQTT| DS
     BR -->|MQTT| RA
+```
+## 📌 Design Principle
 
+Dashboard Backend never accesses the database directly.  
+All persistence and domain logic live exclusively in Data Storage.
+
+---
+
+## 🧱 Services Description
+
+### 1️⃣ UI (Frontend)
+
+Consumes REST APIs from Dashboard Backend.
+
+Displays:
+
+- Patients & details  
+- Live vitals  
+- Alerts & acknowledgments  
+- Wristband management  
+
+---
+
+### 2️⃣ Dashboard Backend (FastAPI)
+
+**Role:** UI-oriented orchestration layer
+
+**Responsibilities:**
+
+- Aggregate data into UI-ready structures  
+- Transform domain data → presentation models  
+- Handle endpoints:
+  - `/dashboard/overview`
+  - `/patients`
+  - `/vitals`
+  - `/alerts`
+  - `/wristbands`
+
+**Does NOT:**
+
+- Store data  
+- Run SQL  
+- Generate timestamps for persistence  
+
+---
+
+### 3️⃣ Data Storage Service (FastAPI + SQLAlchemy)
+
+**Role:** Single source of truth
+
+**Responsibilities:**
+
+- Database access & transactions  
+- Domain consistency  
+- Alert lifecycle management  
+- Assignment integrity  
+
+**Generates internally:**
+
+- `created_at`  
+- `generated_at`  
+- `acknowledged_at`  
+- `start_date` / `end_date`  
+
+---
+
+## 🗄️ Database Schema (ERD)
+
+```mermaid
+erDiagram
+    PATIENT ||--o{ WRISTBAND_ASSIGNMENT : has
+    WRISTBAND ||--o{ WRISTBAND_ASSIGNMENT : assigned_to
+    WRISTBAND_ASSIGNMENT ||--o{ VITAL_MEASUREMENT : produces
+    WRISTBAND_ASSIGNMENT ||--o{ ALERT : triggers
+
+    PATIENT {
+        int patient_id PK
+        string name
+        int age
+        string gender
+        string phone
+        string threshold_profile
+    }
+
+    WRISTBAND {
+        int wristband_id PK
+        datetime created_at
+    }
+
+    WRISTBAND_ASSIGNMENT {
+        int assignment_id PK
+        int patient_id FK
+        int wristband_id FK
+        datetime start_date
+        datetime end_date
+    }
+
+    VITAL_MEASUREMENT {
+        int measurement_id PK
+        int assignment_id FK
+        datetime measured_at
+        int heart_rate
+        int spo2
+        float temperature
+        float motion
+        int battery_level
+    }
+
+    ALERT {
+        int alert_id PK
+        int assignment_id FK
+        datetime generated_at
+        datetime acknowledged_at
+        string severity
+        string status
+        string reviewed_by
+        string clinical_note
+        string metric
+        float value
+        string description
+        string full_description
+    }
+```
+## 🔄 Data Flow Examples
+
+### ➕ Create Patient (with optional wristband)
+
+```mermaid
+sequenceDiagram
+    participant UI
+    participant Backend
+    participant Storage
+
+    UI->>Backend: POST /patients
+    Backend->>Storage: create_patient()
+    Storage-->>Backend: patient_id
+    Backend-->>UI: PatientCreateResponse
+```
