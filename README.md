@@ -1,3 +1,4 @@
+# iot-health-platform
 IoT Platform for Smart Health Monitoring (Course Project)
 #  IoT Health Monitoring Platform
 
@@ -48,16 +49,16 @@ flowchart LR
     BR -->|MQTT| DS
     BR -->|MQTT| RA
 ```
-## 📌 Design Principle
+##  Design Principle
 
 Dashboard Backend never accesses the database directly.  
 All persistence and domain logic live exclusively in Data Storage.
 
 ---
 
-## 🧱 Services Description
+##  Services Description
 
-### 1️⃣ UI (Frontend)
+###  UI (Frontend)
 
 Consumes REST APIs from Dashboard Backend.
 
@@ -70,7 +71,7 @@ Displays:
 
 ---
 
-### 2️⃣ Dashboard Backend (FastAPI)
+###  Dashboard Backend (FastAPI)
 
 **Role:** UI-oriented orchestration layer
 
@@ -93,7 +94,7 @@ Displays:
 
 ---
 
-### 3️⃣ Data Storage Service (FastAPI + SQLAlchemy)
+### Data Storage Service (FastAPI + SQLAlchemy)
 
 **Role:** Single source of truth
 
@@ -113,7 +114,7 @@ Displays:
 
 ---
 
-## 🗄️ Database Schema (ERD)
+## Database Schema (ERD)
 
 ```mermaid
 erDiagram
@@ -170,6 +171,7 @@ erDiagram
         string full_description
     }
 ```
+
 
 ##  Key Design Decisions
 
