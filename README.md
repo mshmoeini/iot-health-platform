@@ -171,18 +171,36 @@ erDiagram
         string full_description
     }
 ```
-## 🔄 Data Flow Examples
 
-### ➕ Create Patient (with optional wristband)
+##  Key Design Decisions
 
-```mermaid
-sequenceDiagram
-    participant UI
-    participant Backend
-    participant Storage
+- Strict service boundaries  
+- No shared database access  
+- UI schemas isolated from DB schemas  
+- All timestamps generated server-side  
+- Assignments guarantee medical correctness  
+- REST-first architecture  
 
-    UI->>Backend: POST /patients
-    Backend->>Storage: create_patient()
-    Storage-->>Backend: patient_id
-    Backend-->>UI: PatientCreateResponse
-```
+---
+
+##  Tech Stack
+
+- **FastAPI** – REST APIs  
+- **SQLAlchemy** – ORM  
+- **PostgreSQL / SQLite**  
+- **MQTT** – IoT ingestion  
+- **Docker & Docker Compose**  
+- **Pydantic** – Validation  
+- **Uvicorn** – ASGI server  
+
+---
+
+##  Features
+
+- Patient management  
+- Wristband assignment & unassignment  
+- Real-time vitals ingestion  
+- Alerts lifecycle & acknowledgment  
+- Dashboard overview & stats  
+- Low battery detection  
+- Clean microservice architecture  
