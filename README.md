@@ -26,8 +26,20 @@ flowchart LR
     UI[UI / Frontend]
     DBE[Dashboard Backend API]
     DS[Data Storage Service]
-    MQTT[IoT Devices / MQTT]
+    RA[Risk Analysis Service]
+    AL[Alert Notification Service]
+    BR [ MQTT Broker]
+    WRS[ Wristband Simulator]
+    DB [Data Base]
 
-    UI -->|REST| DBE
+    UI -->|REST & WS| DBE
     DBE -->|REST| DS
-    MQTT -->|MQTT| DBE
+    DS -->|REST| DBE
+    RA -->|MQTT| AL
+    AL -->|MQTT| DS
+    AL -->|MQTT| DBE
+    WRS -->|MQTT| BR
+    BR -->|MQTT| DBE
+    BR -->|MQTT| DS
+    BR -->|MQTT| RA
+
