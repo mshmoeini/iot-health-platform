@@ -6,7 +6,7 @@ from app.services.container import get_storage
 from app.services.storage import Storage
 from app.services.wristbands_service import (
     list_wristbands,
-    list_available_wristbands,
+    
     create_wristband,
     unassign_wristband,
 )
@@ -48,13 +48,13 @@ def get_wristbands(db: Storage = Depends(get_storage)):
     return list_wristbands(db)
 
 
-@router.get(
-    "/available",
-    summary="Get available wristbands",
-    description="Return wristbands that are not currently assigned to any patient.",
-)
-def get_available_wristbands(db: Storage = Depends(get_storage)):
-    return list_available_wristbands(db)
+# @router.get(
+#     "/available",
+#     summary="Get available wristbands",
+#     description="Return wristbands that are not currently assigned to any patient.",
+# )
+# def get_available_wristbands(db: Storage = Depends(get_storage)):
+#     return list_available_wristbands(db)
 
 
 

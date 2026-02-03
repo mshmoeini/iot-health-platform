@@ -33,4 +33,4 @@ class PatientCreateRequest(BaseModel):
 
 class WristbandCreateRequest(BaseModel):
     wristband_id: int
-    created_at: datetime
+    # created_at: datetime = Field(default_factory=datetime.utcnow)

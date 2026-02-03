@@ -124,13 +124,13 @@ class RESTStorageClient(Storage):
         resp.raise_for_status()
         return resp.json()["items"]
 
-    def get_available_wristbands(self):
-        resp = requests.get(
-            f"{DATA_STORAGE_BASE_URL}/wristbands/available",
-            timeout=5
-        )
-        resp.raise_for_status()
-        return resp.json()["items"]
+    # def get_available_wristbands(self):
+    #     resp = requests.get(
+    #         f"{DATA_STORAGE_BASE_URL}/wristbands/available",
+    #         timeout=5
+    #     )
+    #     resp.raise_for_status()
+    #     return resp.json()["items"]
 
     def create_wristband(self, wristband_id: int):
         resp = requests.post(

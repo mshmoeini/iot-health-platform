@@ -18,7 +18,7 @@ class Storage(ABC):
     # Alerts
     # ==================================================
 
-    @abstractmethod
+    
     def list_alerts(self) -> List[Dict]:
         """
         Return all alerts enriched with:
@@ -29,7 +29,7 @@ class Storage(ABC):
         """
         pass
 
-    @abstractmethod
+    
     def acknowledge_alert(
         self,
         alert_id: int,
@@ -46,7 +46,7 @@ class Storage(ABC):
     # Patients
     # ==================================================
 
-    @abstractmethod
+    
     def get_patients(self) -> List[Dict]:
         """
         Return all patients with their active device assignment (if any).
@@ -99,14 +99,14 @@ class Storage(ABC):
         """
         raise NotImplementedError
     
-    @abstractmethod
+    
     def create_patient(self, data: dict) -> dict:
         """
         Create a new patient and return the created record.
         """
         raise NotImplementedError
     
-    @abstractmethod
+    
     def assign_wristband(
         self,
         patient_id: int,
@@ -117,29 +117,29 @@ class Storage(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
+    
     def create_wristband(self, wristband_id: int) -> Dict:
         """
         Create a new wristband in DB.
         """
         raise NotImplementedError
 
-    @abstractmethod
+    
     def get_patient_overview(self, patient_id: int) -> dict | None:
         """
         Return overview data for a single patient.
         """
         raise NotImplementedError
 
-    @abstractmethod
+    
     def list_wristbands(self) -> list[dict]:
         """
         Return all wristbands.
         """
         raise NotImplementedError
 
-    @abstractmethod
-    def list_available_wristbands(self) -> list[dict]:
+    
+    # def list_available_wristbands(self) -> list[dict]:
         """
         Return wristbands without an active assignment.
         """

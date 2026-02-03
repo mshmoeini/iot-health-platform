@@ -16,20 +16,20 @@
       "name": "health-catalog",
       "type": "config-service",
       "protocols": ["REST"],
-      "base_url": "http://health-catalog:8000",
+      "base_url": "http://health-catalog:8001",
       "version": "v1"
     },
     {
       "name": "risk-analysis-service",
       "type": "backend-service",
-      "protocols": ["MQTT"],
+      "protocols": ["MQTT", "REST"],
       "base_url": null,
       "version": "v1"
     },
     {
       "name": "alert-notification-service",
       "type": "backend-service",
-      "protocols": ["MQTT"],
+      "protocols": ["MQTT", "REST"],
       "base_url": null,
       "version": "v1"
     },
@@ -44,7 +44,7 @@
       "name": "dashboard-backend",
       "type": "orchestration-service",
       "protocols": ["MQTT", "REST", "WebSocket"],
-      "base_url": "http://dashboard-backend:8004",
+      "base_url": "http://dashboard-backend:8000",
       "version": "v1"
     },
     {

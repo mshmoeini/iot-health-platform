@@ -21,7 +21,6 @@ def get_patients_overview(storage: Storage) -> Dict:
     Build UI-ready patients list for Patients page.
     """
 
-    # ✅ FIX: storage layer فقط دیتای خام می‌دهد
     rows = storage.get_patients()
 
     items: List[Dict] = []
