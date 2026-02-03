@@ -28,7 +28,7 @@ flowchart LR
     DS[Data Storage Service]
     RA[Risk Analysis Service]
     AL[Alert Notification Service]
-    BR [MQTT Broker]
+    BR [Broker]
     WRS[Wristband Simulator]
     DB [Data Base]
 
