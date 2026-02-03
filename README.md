@@ -31,10 +31,16 @@ flowchart LR
     BR[Broker]
     WRS[Wristband Simulator]
     DB[Data Base]
+    H[Health Catalog]
 
     UI -->|REST & WS| DBE
     DBE -->|REST| DS
     DS -->|REST| DBE
+    DS --> DB
+    H -->|REST| DS
+    H -->|REST| DBE
+    H -->|REST| RA
+    H -->|REST| AL
     RA -->|MQTT| AL
     AL -->|MQTT| DS
     AL -->|MQTT| DBE
