@@ -11,11 +11,15 @@ A modular, scalable **IoT-based health monitoring system** for real-time patient
 This project implements a **distributed microservice architecture** designed to monitor patients using wearable wristbands.  
 It supports real-time vital collection, alert lifecycle management, and UI-ready dashboards.
 
-The system is composed of **three main layers**:
+The system is composed of **6 main layers**:
 
 - **UI (Frontend)** – Clinician dashboard
 - **Dashboard Backend API** – UI-oriented orchestration
 - **Data Storage Service** – Database & domain logic
+- **MQTT BROKER** - Broker as a Hub for Payloads
+- **Risk Analysis** - Creating Risk Events Based On Profiles and Vital Payloads
+- **Alert Notification** - Managing Alerts
+- **Health Catalog** - Source Of Truth In Configuration Area
 
 ---
 
